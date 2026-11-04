@@ -4,7 +4,7 @@ import Link from "next/link";
 import C from "@/components/cs";
 import { usePrefs } from "@/components/Shell";
 import { useJson } from "@/lib/useJson";
-import { Match, Trophy, LeagueSwitch, teamName } from "@/components/Bracket";
+import { Match, Trophy, LeagueSwitch, SeriesGames, teamName } from "@/components/Bracket";
 
 const CONF = { East: "Este", West: "Oeste" };
 const PHASE = { regular: "Temporada regular", playin: "Play-in", playoffs: "Playoffs", done: "Finalizada" };
@@ -74,11 +74,17 @@ function PlayIn({ data }) {
 
 function Playoffs({ data }) {
   const b = data.bracket;
+  const [pick, setPick] = useState(null);
+  const key = (m) => m?.a && m?.b ? `${m.a.tri}-${m.b.tri}` : null;
+  const sel = (m) => setPick((p) => (p === key(m) ? null : key(m)));
+  const all = ["West", "East"].flatMap((c) => [...b[c].r1, ...b[c].sf, b[c].cf]).concat(b.finals);
+  const picked = all.find((m) => key(m) === pick);
+  const mt = (m, i, extra) => <Match key={i} m={m} onPick={sel} picked={key(m) === pick} {...extra} />;
   const side = (c) => (
     <div className={`cs-br-side is-po is-${c === "West" ? "west" : "east"}`}>
-      <div className="cs-br-round" data-r="r1"><div className="cs-br-h">1.ª ronda · {CONF[c]}</div>{b[c].r1.map((m, i) => <Match key={i} m={m} compact />)}</div>
-      <div className="cs-br-round" data-r="sf"><div className="cs-br-h">Semifinal</div>{b[c].sf.map((m, i) => <Match key={i} m={m} compact />)}</div>
-      <div className="cs-br-round" data-r="cf"><div className="cs-br-h">Final {CONF[c]}</div><Match m={b[c].cf} compact /></div>
+      <div className="cs-br-round" data-r="r1"><div className="cs-br-h">1.ª ronda · {CONF[c]}</div>{b[c].r1.map((m, i) => mt(m, i, { compact: true }))}</div>
+      <div className="cs-br-round" data-r="sf"><div className="cs-br-h">Semifinal</div>{b[c].sf.map((m, i) => mt(m, i, { compact: true }))}</div>
+      <div className="cs-br-round" data-r="cf"><div className="cs-br-h">Final {CONF[c]}</div>{mt(b[c].cf, 0, { compact: true })}</div>
     </div>
   );
   return (
@@ -91,10 +97,11 @@ function Playoffs({ data }) {
         <div className="cs-br-center">
           <Trophy champion={b.champion} />
           <div className="cs-br-h">{b.champion ? `Campeón: ${teamName(b.champion)}` : "Finales NBA"}</div>
-          <Match m={b.finals} big />
+          {mt(b.finals, 0, { big: true })}
         </div>
         {side("East")}
       </div>
+      {picked ? <SeriesGames m={picked} onClose={() => setPick(null)} /> : null}
     </div>
   );
 }
@@ -133,7 +140,7 @@ export default function Season() {
           : <Playoffs data={data} />}
       </div>
       <p className="cs-gut cs-subtle" style={{ fontSize: 12, marginTop: 18 }}>
-        Datos de ESPN. Toca un cruce para ver el partido. <Link href="/copa" style={{ color: "var(--brand-ink)" }}>Ver la Copa NBA →</Link>
+        Datos de ESPN. Toca una serie para ver sus juegos. <Link href="/copa" style={{ color: "var(--brand-ink)" }}>Ver la Copa NBA →</Link>
       </p>
     </>
   );

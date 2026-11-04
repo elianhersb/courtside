@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import C from "./cs";
@@ -44,7 +45,7 @@ function seriesFoot(m) {
   return m.next ? `${lead} · ${day(m.next.date)}` : lead;
 }
 
-export function Match({ m, label, big, compact }) {
+export function Match({ m, label, big, compact, onPick, picked }) {
   const live = m.status === "live";
   const series = m.a?.wins !== undefined;
   const foot = live ? <C.LiveBadge clock={m.live?.clock || m.clock} />
@@ -61,7 +62,9 @@ export function Match({ m, label, big, compact }) {
     </>
   );
   const id = m.id || (m.live || m.next || m.games?.at(-1))?.id;
-  const cls = `cs-mt${big ? " is-final" : ""}${m.projected ? " is-proj" : ""}${live ? " is-live" : ""}`;
+  const cls = `cs-mt${big ? " is-final" : ""}${m.projected ? " is-proj" : ""}${live ? " is-live" : ""}${picked ? " is-picked" : ""}`;
+  // Una serie ya empezada abre su lista de juegos en vez de un solo partido.
+  if (onPick && m.games?.length) return <button type="button" className={`${cls} cs-press`} onClick={() => onPick(m)} aria-pressed={!!picked}>{body}</button>;
   return id ? <Link href={`/partido/${id}`} className={`${cls} cs-press`}>{body}</Link> : <div className={cls}>{body}</div>;
 }
 
@@ -71,5 +74,36 @@ export function Trophy({ champion }) {
     <div className={`cs-br-trophy${champion ? " has-champ" : ""}`}>
       {champion ? <C.TeamLogo team={champion} size="lg" /> : <C.Icon name="trophy" weight={1.6} />}
     </div>
+  );
+}
+
+// Los juegos de una serie de playoffs, del 1 al 7.
+export function SeriesGames({ m, onClose }) {
+  const ref = useRef(null);
+  // La lista sale debajo de la llave: en el teléfono queda fuera de la vista si no se desplaza.
+  useEffect(() => { ref.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }); }, [m]);
+  return (
+    <section ref={ref} className="cs-sg">
+      <header>
+        <b>{teamName(m.a.tri)} vs {teamName(m.b.tri)}</b>
+        <span className="cs-muted">{seriesFoot(m)}</span>
+        <button type="button" className="cs-icon-btn" onClick={onClose} aria-label="Cerrar"><C.Icon name="x" /></button>
+      </header>
+      <div className="cs-sg-list">
+        {m.games.map((g, i) => (
+          <Link key={g.id} href={`/partido/${g.id}`} className="cs-sg-game cs-press">
+            <span className="cs-eyebrow">Juego {i + 1}</span>
+            <span className="cs-muted">{day(g.date)}</span>
+            {[g.away, g.home].map((t) => (
+              <span key={t.tri} className={`cs-sg-team${g.winner && g.winner !== t.tri ? " is-lost" : ""}`}>
+                <C.TeamLogo team={t.tri} size="xs" /><b>{t.tri}</b>
+                <span className="cs-num">{g.status === "scheduled" ? "" : t.score}</span>
+              </span>
+            ))}
+            <span className="cs-sg-st">{g.status === "live" ? <C.LiveBadge clock={g.clock} /> : g.status === "scheduled" ? timeOf(g.date) : "Final"}</span>
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }

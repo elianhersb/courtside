@@ -2,6 +2,12 @@ import Anthropic from "@anthropic-ai/sdk";
 import { getScoreboard, getGame, searchPlayers, getPlayer, getLeaders, getInjuries } from "@/lib/espn";
 import { getSeason } from "@/lib/season";
 import { getCup } from "@/lib/cup";
+import { limiter } from "@/lib/ratelimit";
+
+// Topes para que nadie gaste la key: por IP y en total por día (configurables por entorno).
+const perIp = limiter(Number(process.env.CHAT_PER_HOUR) || 20, 3600e3);
+const perDay = limiter(Number(process.env.CHAT_PER_DAY) || 500, 86400e3);
+const ipOf = (req) => req.headers.get("x-forwarded-for")?.split(",")[0].trim() || req.headers.get("x-real-ip") || "local";
 
 const tools = [
   {
@@ -109,6 +115,14 @@ Las fechas de las herramientas son días de la liga (hora del Este de EE.UU.); "
 Sobre dónde ver un partido en Venezuela: siempre está NBA League Pass; si en EE.UU. lo pasa ESPN o ABC, en Latinoamérica suele ir por ESPN y Disney+. No afirmes canales locales sin datos.`;
 
 export async function POST(req) {
+  // Solo desde la propia app: el navegador manda Origin en los POST.
+  const origin = req.headers.get("origin");
+  const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
+  if (origin && origin.replace(/^https?:\/\//, "") !== host) return Response.json({ error: "Origen no permitido" }, { status: 403 });
+  // En orden: una IP que ya pasó su tope no consume el cupo diario de los demás.
+  let limit = perIp(ipOf(req));
+  if (limit.ok) limit = perDay("all");
+  if (!limit.ok) return Response.json({ error: `Llegaste al límite de preguntas. Intenta de nuevo en ${Math.ceil(limit.retry / 60)} min.` }, { status: 429, headers: { "retry-after": String(limit.retry) } });
   const body = await req.json().catch(() => null);
   const history = Array.isArray(body?.messages) ? body.messages : [];
   // Solo texto plano de usuario/asistente; el cliente no puede inyectar bloques de herramientas.
@@ -125,7 +139,7 @@ export async function POST(req) {
     for (let turn = 0; turn < 8; turn++) {
       const res = await client.beta.messages.create({
         model: process.env.CHAT_MODEL || "claude-haiku-5-5",
-        max_tokens: 16000,
+        max_tokens: 6000,
         output_config: { effort: "medium" },
         // El respaldo ante rechazos es de la API de Anthropic; OpenRouter no lo acepta.
         ...(process.env.ANTHROPIC_BASE_URL ? {} : { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" }),
