@@ -1,0 +1,56 @@
+/* CourtSide — tokens como variables CSS (generado desde tokens.json). Oscuro por defecto; [data-theme="light"] en cualquier contenedor cambia a claro. */
+:root, [data-theme="dark"] {
+  --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --font-sans: Archivo, system-ui, sans-serif;
+
+  --bg: #0b0d11; --surface: #14171d; --surface-raised: #1c2028; --surface-pressed: #232833; --surface-inset: #0f1216;
+  --line: #262b35; --line-strong: #5d6678;
+  --ink: #f4f6f9; --ink-muted: #a1a9b6; --ink-subtle: #7f8898;
+  --brand: #ff7a1a; --on-brand: #1a0c02; --brand-ink: #ff9147; --brand-soft: #ff7a1a26;
+  --live: #ff4d4d; --live-soft: #ff4d4d24; --positive: #5cc8ff; --star: #ffc53d; --focus: #ffb070;
+  --glass: #14171dbf; --scrim: #000000a6; --media-scrim: #0b0d11b8; --on-media: #ffffff; --on-media-muted: #ffffffc7;
+
+  --shadow-card: 0 1px 0 rgba(255,255,255,0.04) inset, 0 6px 20px rgba(0,0,0,0.35);
+  --shadow-float: 0 12px 40px rgba(0,0,0,0.55);
+  --shadow-press: 0 2px 8px rgba(0,0,0,0.4);
+  color-scheme: dark;
+}
+[data-theme="light"] {
+  --bg: #f3f4f6; --surface: #ffffff; --surface-raised: #f7f8fa; --surface-pressed: #e7eaef; --surface-inset: #eceef2;
+  --line: #e1e4ea; --line-strong: #8a93a2;
+  --ink: #0c0e13; --ink-muted: #4b5362; --ink-subtle: #5f6774;
+  --brand: #f26a0c; --on-brand: #1a0c02; --brand-ink: #b44800; --brand-soft: #f26a0c1f;
+  --live: #d92424; --live-soft: #d924241a; --positive: #0369a1; --star: #b7791f; --focus: #b44800;
+  --glass: #ffffffc7; --scrim: #0c0e1366; --media-scrim: #0b0d11a8; --on-media: #ffffff; --on-media-muted: #ffffffc7;
+
+  --shadow-card: 0 1px 2px rgba(12,14,19,0.06), 0 6px 20px rgba(12,14,19,0.07);
+  --shadow-float: 0 12px 40px rgba(12,14,19,0.16);
+  --shadow-press: 0 2px 8px rgba(12,14,19,0.08);
+  color-scheme: light;
+}
+:root {
+  --team-atl: #e03a3e; --team-atl-2: #c1d32f; --team-bos: #007a33; --team-bos-2: #ba9653; --team-bkn: #000000; --team-bkn-2: #ffffff;
+  --team-cha: #1d1160; --team-cha-2: #00788c; --team-chi: #ce1141; --team-chi-2: #000000; --team-cle: #860038; --team-cle-2: #fdbb30;
+  --team-dal: #00538c; --team-dal-2: #002b5e; --team-den: #0e2240; --team-den-2: #fec524; --team-det: #c8102e; --team-det-2: #1d42ba;
+  --team-gsw: #1d428a; --team-gsw-2: #ffc72c; --team-hou: #ce1141; --team-hou-2: #000000; --team-ind: #002d62; --team-ind-2: #fdbb30;
+  --team-lac: #c8102e; --team-lac-2: #1d428a; --team-lal: #552583; --team-lal-2: #fdb927; --team-mem: #5d76a9; --team-mem-2: #12173f;
+  --team-mia: #98002e; --team-mia-2: #f9a01b; --team-mil: #00471b; --team-mil-2: #eee1c6; --team-min: #0c2340; --team-min-2: #236192;
+  --team-nop: #0c2340; --team-nop-2: #c8102e; --team-nyk: #006bb6; --team-nyk-2: #f58426; --team-okc: #007ac1; --team-okc-2: #ef3b24;
+  --team-orl: #0077c0; --team-orl-2: #c4ced4; --team-phi: #006bb6; --team-phi-2: #ed174c; --team-phx: #1d1160; --team-phx-2: #e56020;
+  --team-por: #e03a3e; --team-por-2: #000000; --team-sac: #5a2d81; --team-sac-2: #63727a; --team-sas: #c4ced4; --team-sas-2: #000000;
+  --team-tor: #ce1141; --team-tor-2: #000000; --team-uta: #002b5c; --team-uta-2: #f9a01b; --team-was: #002b5c; --team-was-2: #e31837;
+
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-12: 48px;
+  --radius-xs: 6px; --radius-sm: 10px; --radius-md: 14px; --radius-lg: 20px; --radius-xl: 28px; --radius-pill: 999px;
+
+  --logo-xs: 20px; --logo-sm: 28px; --logo-md: 40px; --logo-lg: 72px; --logo-xl: 96px;
+  --avatar-sm: 32px; --avatar-md: 44px; --avatar-lg: 64px; --avatar-hero: 220px;
+  --channel-logo: 18px; --nav-height: 64px; --tap-min: 44px;
+
+  --dur-instant: 90ms; --dur-fast: 160ms; --dur-base: 260ms; --dur-slow: 420ms; --dur-slower: 700ms;
+  --dur-count: 900ms; --dur-pulse: 1600ms; --dur-shimmer: 1400ms; --dur-splash: 850ms; --stagger: 50ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); --ease-standard: cubic-bezier(0.2, 0, 0, 1); --ease-linear: linear;
+
+  --z-header: 30; --z-nav: 40; --z-sheet: 60; --z-toast: 80;
+}

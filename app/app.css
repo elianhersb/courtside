@@ -1,0 +1,40 @@
+/* Ajustes para correr el diseño a pantalla completa en el teléfono (el diseño usa un marco de 390×844). */
+body { padding: 0; overscroll-behavior: none; }
+.cs-app { position: fixed; inset: 0; max-width: 480px; margin: 0 auto; overflow: hidden; background: var(--bg); color: var(--ink); font-family: var(--font-sans); }
+.cs-app .cs-phone-scroll { padding-top: env(safe-area-inset-top); padding-bottom: calc(110px + env(safe-area-inset-bottom)); }
+.cs-app .cs-phone-nav { bottom: calc(14px + env(safe-area-inset-bottom)); }
+.cs-app .cs-hero { padding-top: calc(12px + env(safe-area-inset-top)); }
+.cs-dock { position: absolute; left: 0; right: 0; bottom: calc(96px + env(safe-area-inset-bottom)); padding: 8px 16px 10px; background: linear-gradient(to top, var(--bg) 70%, transparent); z-index: 20; }
+.cs-chips { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 8px; scrollbar-width: none; }
+.cs-chips::-webkit-scrollbar { display: none; }
+.cs-error { color: var(--live); font-size: 13px; padding: 12px 4px; }
+@media (min-width: 481px) { .cs-app { border-left: 1px solid var(--line); border-right: 1px solid var(--line); } }
+/* Marcadores de 3 dígitos (lo normal en la NBA) no caben a 64px en 375px de ancho. */
+.cs-app .cs-hero-grid { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+.cs-app .cs-hero-score { gap: var(--space-2); }
+.cs-app .cs-hero-score .cs-score[data-size="xl"] { font-size: clamp(40px, 12vw, 64px); }
+.cs-app .cs-hero-team b { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Asistente: barra de pregunta fija abajo en el teléfono. */
+.cs-dock { position: fixed; left: 50%; transform: translateX(-50%); width: min(100%, 480px); }
+.cs-desk-only { display: none; }
+.cs-chat { padding-bottom: 170px; }
+
+/* Escritorio: página web con menú lateral, columna central y panel del asistente (artboard "Escritorio"). */
+@media (min-width: 900px) {
+  .cs-app { position: static; max-width: 1180px; margin: 0 auto; padding: 24px; overflow: visible; border: 0;
+    display: grid; grid-template-columns: 220px minmax(0, 1fr) 280px; gap: 32px; align-items: start; }
+  .cs-app .cs-phone-scroll { position: static; overflow: visible; padding: 0 0 48px; min-width: 0; }
+  .cs-app .cs-phone-nav { display: none; }
+  .cs-desk-only { display: flex; }
+  .cs-app .cs-rail { top: 24px; }
+  .cs-app .cs-hero { border-radius: var(--radius-lg); padding-top: 16px; }
+  .cs-app .cs-screen-h, .cs-app .cs-gut { padding-left: 0; padding-right: 0; }
+  .cs-dock { position: sticky; left: auto; transform: none; width: auto; bottom: 0; padding: 8px 0 16px; }
+  .cs-chat { padding-bottom: 24px; }
+  .cs-aside { position: sticky; top: 24px; flex-direction: column; gap: 14px; padding-top: 20px; }
+}
+@media (min-width: 900px) and (max-width: 1179px) {
+  .cs-app { grid-template-columns: 200px minmax(0, 1fr); }
+  .cs-aside { display: none; }
+}
