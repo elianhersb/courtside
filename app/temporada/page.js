@@ -5,6 +5,9 @@ import C from "@/components/cs";
 import { usePrefs } from "@/components/Shell";
 import { useJson } from "@/lib/useJson";
 import { Match, Trophy, LeagueSwitch, SeriesGames, teamName } from "@/components/Bracket";
+import SeasonPicker, { seasonLabel } from "@/components/SeasonPicker";
+
+const FIRST_SEASON = 1985; // igual que en lib/season.js
 
 const CONF = { East: "Este", West: "Oeste" };
 const PHASE = { regular: "Temporada regular", playin: "Play-in", playoffs: "Playoffs", done: "Finalizada" };
@@ -12,7 +15,12 @@ const ZONE = { in: "Clasificado", playin: "Play-in", out: "Eliminado" };
 // La temporada actual va de octubre a junio: en ESPN se nombra por el año en que termina.
 const thisSeason = () => { const d = new Date(); return d.getMonth() >= 9 ? d.getFullYear() + 1 : d.getFullYear(); };
 
-function Table({ conf, rows, favs }) {
+// Con play-in (desde 2020): 1-6 directos, 7-10 play-in. Antes: clasificaban los 8 primeros.
+const champName = (b) => [b.finals.a, b.finals.b].find((t) => t?.tri === b.champion)?.name || teamName(b.champion);
+const zoneOf = (seed, playIn) => (playIn ? (seed <= 6 ? 1 : seed <= 10 ? 2 : 3) : seed <= 8 ? 1 : 3);
+const cutAt = (seed, playIn) => (playIn ? seed === 6 || seed === 10 : seed === 8);
+
+function Table({ conf, rows, favs, playIn }) {
   return (
     <section className="cs-std">
       <h2 className="cs-cup-conf"><span>Conferencia {CONF[conf]}</span></h2>
@@ -21,9 +29,9 @@ function Table({ conf, rows, favs }) {
           <span>#</span><span>Equipo</span><span>G</span><span>P</span><span>%</span><span>JD</span><span className="cs-std-x">Racha</span><span className="cs-std-x">Últ. 10</span><span className="cs-std-xx">Local</span><span className="cs-std-xx">Visita</span>
         </div>
         {rows.map((r) => (
-          <div key={r.tri} className={`cs-std-row is-z${r.seed <= 6 ? 1 : r.seed <= 10 ? 2 : 3}${r.seed === 6 || r.seed === 10 ? " is-cut" : ""}${favs.includes(r.tri) ? " is-fav" : ""}`} style={{ "--c": C.TEAMS[r.tri]?.color }}>
+          <div key={r.tri} className={`cs-std-row is-z${zoneOf(r.seed, playIn)}${cutAt(r.seed, playIn) ? " is-cut" : ""}${favs.includes(r.tri) ? " is-fav" : ""}`} style={{ "--c": C.TEAMS[r.tri]?.color }}>
             <span className="cs-grp-pos">{r.seed}</span>
-            <span className="cs-grp-team"><C.TeamLogo team={r.tri} size="sm" /><b>{teamName(r.tri)}</b>{r.clinch ? <em className={`is-${r.clinch}`}>{ZONE[r.clinch]}</em> : null}</span>
+            <span className="cs-grp-team"><C.TeamLogo team={r.tri} size="sm" /><b>{r.name || teamName(r.tri)}</b>{r.clinch ? <em className={`is-${r.clinch}`}>{ZONE[r.clinch]}</em> : null}</span>
             <span className="cs-num">{r.w}</span><span className="cs-num">{r.l}</span>
             <span className="cs-num cs-muted">{r.pct}</span><span className="cs-num cs-muted">{r.gb}</span>
             <span className={`cs-num cs-std-x ${r.streak?.startsWith("W") ? "is-pos" : "is-neg"}`}>{r.streak?.replace("W", "G").replace("L", "P")}</span>
@@ -42,10 +50,12 @@ function Standings({ data, favs }) {
     <div className="cs-stack" style={{ gap: 14 }}>
       <div className="cs-phone-only"><C.Segmented items={[{ key: "East", label: "Este" }, { key: "West", label: "Oeste" }]} value={conf} onChange={setConf} /></div>
       <div className="cs-stds">
-        {Object.keys(CONF).map((c) => <div key={c} className={c === conf ? "" : "cs-desk-show"}><Table conf={c} rows={data.standings[c] || []} favs={favs} /></div>)}
+        {Object.keys(CONF).map((c) => <div key={c} className={c === conf ? "" : "cs-desk-show"}><Table conf={c} rows={data.standings[c] || []} favs={favs} playIn={data.hasPlayIn} /></div>)}
       </div>
       <div className="cs-std-legend">
-        <span className="is-z1">1–6 · Playoffs directos</span><span className="is-z2">7–10 · Play-in</span><span className="is-z3">11–15 · Fuera</span>
+        {data.hasPlayIn
+          ? <><span className="is-z1">1–6 · Playoffs directos</span><span className="is-z2">7–10 · Play-in</span><span className="is-z3">11–15 · Fuera</span></>
+          : <><span className="is-z1">1–8 · Playoffs</span><span className="is-z3">9 en adelante · Fuera</span></>}
       </div>
     </div>
   );
@@ -96,12 +106,14 @@ function Playoffs({ data }) {
         {side("West")}
         <div className="cs-br-center">
           <Trophy champion={b.champion} />
-          <div className="cs-br-h">{b.champion ? `Campeón: ${teamName(b.champion)}` : "Finales NBA"}</div>
+          <div className="cs-br-h">{b.champion ? `Campeón: ${champName(b)}` : "Finales NBA"}</div>
           {mt(b.finals, 0, { big: true })}
         </div>
         {side("East")}
       </div>
       {picked ? <SeriesGames m={picked} onClose={() => setPick(null)} /> : null}
+      {all.some((m) => m.incomplete) ? <p className="cs-subtle" style={{ fontSize: 12, margin: 0 }}>A los datos de ESPN les faltan partidos de algunas series de esta temporada: el ganador se toma de la ronda siguiente.</p> : null}
+      {all.some((m) => m.need === 3) ? <p className="cs-subtle" style={{ fontSize: 12, margin: 0 }}>Hasta 2002 la primera ronda se jugaba al mejor de 5.</p> : null}
     </div>
   );
 }
@@ -112,7 +124,6 @@ export default function Season() {
   const { data, error } = useJson(`/api/season?year=${year}`, 60000);
   const [tab, setTab] = useState(null);
   useEffect(() => { if (data) setTab((t) => t || (data.phase === "regular" ? "table" : data.phase === "playin" ? "playin" : "playoffs")); }, [data]);
-  const label = (y) => `${y - 1}-${String(y).slice(2)}`;
 
   return (
     <>
@@ -121,16 +132,16 @@ export default function Season() {
         <div className="cs-cup-hero-ic"><C.Icon name="trophy" weight={1.8} /></div>
         <div style={{ minWidth: 0, flex: 1 }}>
           <div className="cs-eyebrow">NBA</div>
-          <h1>Temporada {label(year)}</h1>
+          <h1>Temporada {seasonLabel(year)}</h1>
           <div className="cs-row" style={{ gap: 8, marginTop: 8 }}>
             {data ? <span className="cs-cup-chip">{PHASE[data.phase]}</span> : null}
-            {data?.bracket.champion ? <span className="cs-muted" style={{ fontSize: 13 }}>Campeón: <b>{teamName(data.bracket.champion)}</b></span> : null}
+            {data?.bracket.champion ? <span className="cs-muted" style={{ fontSize: 13 }}>Campeón: <b>{champName(data.bracket)}</b></span> : null}
           </div>
         </div>
-        <div className="cs-season-pick"><C.Segmented items={[{ key: thisSeason(), label: label(thisSeason()) }, { key: thisSeason() - 1, label: label(thisSeason() - 1) }]} value={year} onChange={(y) => { setYear(y); setTab(null); }} /></div>
+        <div className="cs-season-pick"><SeasonPicker value={year} first={FIRST_SEASON} last={thisSeason()} onChange={(y) => { setYear(y); setTab(null); }} /></div>
       </div>
       <div className="cs-gut" style={{ marginTop: 14 }}>
-        <C.Tabs items={[{ key: "table", label: "Posiciones" }, { key: "playin", label: "Play-in" }, { key: "playoffs", label: "Playoffs" }]} value={tab || "table"} onChange={setTab} />
+        <C.Tabs items={[{ key: "table", label: "Posiciones" }, ...(data && !data.hasPlayIn ? [] : [{ key: "playin", label: "Play-in" }]), { key: "playoffs", label: "Playoffs" }]} value={tab || "table"} onChange={setTab} />
       </div>
       <div className="cs-gut" style={{ marginTop: 16 }}>
         {error ? <div className="cs-error">{error}</div>

@@ -40,7 +40,7 @@ El volumen guarda la base de datos (cuentas y alertas); sin él se pierde en cad
 - `components/cs.js`: sistema de componentes exportado de Claude Design (no editar a mano salvo para conectar eventos). Estilos en `app/tokens.css` y `app/courtside.css`.
 - `lib/espn.js`: datos desde la API pública de ESPN (no oficial), normalizados al formato de los componentes.
 - `lib/channels.js`: reglas de "Dónde verlo" por país.
-- `lib/season.js`: tabla de posiciones, play-in y llave de playoffs (series al mejor de 7). Todo sale de ESPN; antes de abril la llave es una proyección desde la tabla.
+- `lib/season.js`: tabla de posiciones, play-in y llave de playoffs de cualquier temporada desde 1984-85. Antes de abril la llave es una proyección desde la tabla. En temporadas viejas ESPN no dice la ronda de cada partido, trae fechas corridas o puestos en 0: la ronda se deduce por el orden de las series y la llave se arma con las series jugadas. Hasta 2002 la 1.ª ronda era al mejor de 5.
 - `lib/cup.js`: Copa NBA. Los grupos de cada temporada se cargan a mano en `SEASON` (ESPN no los publica); la tabla, el wild card y la llave se calculan con los resultados.
 - `app/api/*`: rutas que consulta la app; `app/api/chat` es el asistente (Claude con herramientas que llaman a `lib/espn.js`).
 - `lib/db.js`: SQLite (`node:sqlite`) en `.data/courtside.db`: cuentas, sesiones, dispositivos, suscripciones a alertas y contadores diarios.

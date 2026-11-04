@@ -5,6 +5,7 @@ import C from "@/components/cs";
 import { useAccount } from "@/components/Shell";
 import { useJson } from "@/lib/useJson";
 import { post } from "@/components/AuthForm";
+import Bars from "@/components/Bars";
 
 const PLATFORM = { android: "Android", ios: "iPhone / iPad", desktop: "Escritorio" };
 const ROLE = { user: "Usuario", admin: "Administrador" };
@@ -22,25 +23,9 @@ function Tile({ label, value, sub }) {
   );
 }
 
-// Barras por día de una sola serie: el título la nombra, sin leyenda. Cada barra muestra su valor al pasar el mouse o enfocar.
-function Bars({ title, data }) {
-  const max = Math.max(1, ...data.map((d) => d.n));
-  const total = data.reduce((s, d) => s + d.n, 0);
-  return (
-    <section className="cs-adm-card">
-      <header><h3>{title}</h3><span className="cs-muted">{fmt(total)} en 30 días</span></header>
-      <div className="cs-adm-bars" role="img" aria-label={`${title}: ${fmt(total)} en 30 días`}>
-        {data.map((d) => (
-          <div key={d.day} className="cs-adm-bar" tabIndex={0} aria-label={`${dayLabel(d.day)}: ${d.n}`}>
-            <i style={{ height: `${(d.n / max) * 100}%` }} className={d.n ? "" : "is-zero"} />
-            <span className="cs-adm-tip"><b>{fmt(d.n)}</b>{dayLabel(d.day)}</span>
-          </div>
-        ))}
-      </div>
-      <div className="cs-adm-axis"><span>{dayLabel(data[0].day)}</span><span>Hoy</span></div>
-    </section>
-  );
-}
+const Daily = ({ title, data }) => (
+  <Bars title={title} sub={`${fmt(data.reduce((s, d) => s + d.n, 0))} en 30 días`} data={data.map((d) => ({ key: d.day, label: dayLabel(d.day), n: d.n }))} last="Hoy" fmt={fmt} />
+);
 
 function Overview() {
   const { data, error } = useJson("/api/admin/stats", 60000);
@@ -57,10 +42,10 @@ function Overview() {
         <Tile label="Preguntas al asistente" value={data.chat.today} sub={`hoy · ${fmt(data.chat.last7)} en 7 días`} />
       </div>
       <div className="cs-adm-grid">
-        <Bars title="Dispositivos nuevos por día" data={data.series.devices} />
-        <Bars title="Instalaciones por día" data={data.series.installs} />
-        <Bars title="Cuentas nuevas por día" data={data.series.signups} />
-        <Bars title="Preguntas al asistente por día" data={data.series.chat} />
+        <Daily title="Dispositivos nuevos por día" data={data.series.devices} />
+        <Daily title="Instalaciones por día" data={data.series.installs} />
+        <Daily title="Cuentas nuevas por día" data={data.series.signups} />
+        <Daily title="Preguntas al asistente por día" data={data.series.chat} />
       </div>
       <div className="cs-adm-grid">
         <section className="cs-adm-card">

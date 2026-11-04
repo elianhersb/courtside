@@ -21,17 +21,17 @@ export function LeagueSwitch() {
 }
 
 // Un equipo dentro de un cruce: marcador (partido único) o victorias de la serie (al mejor de 7).
-function Side({ s, winner, live, compact }) {
+function Side({ s, winner, live, compact, need = 4 }) {
   if (!s) return <div className="cs-mt-side is-tbd"><span className="cs-mt-logo" /><b>Por definir</b></div>;
   const lost = winner && winner !== s.tri;
   return (
     <div className={`cs-mt-side${winner === s.tri ? " is-win" : ""}${lost ? " is-lost" : ""}`}>
       {s.seed ? <span className="cs-mt-seed">{s.seed}</span> : null}
       <C.TeamLogo team={s.tri} size="sm" />
-      <b>{compact ? s.tri : teamName(s.tri)}</b>
+      <b>{compact ? s.tri : s.name || teamName(s.tri)}</b>
       {s.wins !== undefined ? (
         <span className="cs-mt-wins" aria-label={`${s.wins} victorias`}>
-          {[0, 1, 2, 3].map((i) => <i key={i} className={i < s.wins ? "is-on" : ""} />)}<em>{s.wins}</em>
+          {Array.from({ length: need }, (_, i) => <i key={i} className={i < s.wins ? "is-on" : ""} />)}<em>{s.wins}</em>
         </span>
       ) : s.score !== undefined ? <span className={`cs-mt-score${live ? " is-live" : ""}`}>{s.score}</span> : null}
     </div>
@@ -56,8 +56,8 @@ export function Match({ m, label, big, compact, onPick, picked }) {
   const body = (
     <>
       {label ? <div className="cs-mt-label">{label}</div> : null}
-      <Side s={m.a} winner={m.winner} live={live} compact={compact} />
-      <Side s={m.b} winner={m.winner} live={live} compact={compact} />
+      <Side s={m.a} winner={m.winner} live={live} compact={compact} need={m.need} />
+      <Side s={m.b} winner={m.winner} live={live} compact={compact} need={m.need} />
       {foot ? <div className="cs-mt-foot">{foot}</div> : null}
     </>
   );
@@ -85,7 +85,7 @@ export function SeriesGames({ m, onClose }) {
   return (
     <section ref={ref} className="cs-sg">
       <header>
-        <b>{teamName(m.a.tri)} vs {teamName(m.b.tri)}</b>
+        <b>{m.a.name || teamName(m.a.tri)} vs {m.b.name || teamName(m.b.tri)}</b>
         <span className="cs-muted">{seriesFoot(m)}</span>
         <button type="button" className="cs-icon-btn" onClick={onClose} aria-label="Cerrar"><C.Icon name="x" /></button>
       </header>
