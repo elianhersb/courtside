@@ -33,7 +33,7 @@ docker pull ghcr.io/elianhersb/courtside:latest
 docker run -d --env-file .env.local -p 3000:3000 -v courtside-data:/app/.data ghcr.io/elianhersb/courtside:latest
 ```
 
-El volumen guarda las suscripciones a las alertas; sin él se pierden en cada deploy.
+El volumen guarda la base de datos (cuentas y alertas); sin él se pierde en cada deploy.
 
 ## Estructura
 
@@ -43,7 +43,10 @@ El volumen guarda las suscripciones a las alertas; sin él se pierden en cada de
 - `lib/season.js`: tabla de posiciones, play-in y llave de playoffs (series al mejor de 7). Todo sale de ESPN; antes de abril la llave es una proyección desde la tabla.
 - `lib/cup.js`: Copa NBA. Los grupos de cada temporada se cargan a mano en `SEASON` (ESPN no los publica); la tabla, el wild card y la llave se calculan con los resultados.
 - `app/api/*`: rutas que consulta la app; `app/api/chat` es el asistente (Claude con herramientas que llaman a `lib/espn.js`).
-- `lib/push.js`: alertas push. Cada minuto revisa los marcadores de ESPN y avisa el inicio, los partidos cerrados (≤ 5 puntos con menos de 5 min del último cuarto) y el final a quien sigue a esos equipos. Las suscripciones van en `.data/push.json`; arranca desde `instrumentation.js` si están `VAPID_PUBLIC_KEY` y `VAPID_PRIVATE_KEY`.
+- `lib/db.js`: SQLite (`node:sqlite`) en `.data/courtside.db`: cuentas, sesiones, dispositivos, suscripciones a alertas y contadores diarios.
+- `lib/auth.js`: cuentas opcionales. Clave con scrypt o Google (OAuth con PKCE), sesiones en cookie httpOnly de 30 días, tokens de un solo uso para confirmar el correo y recuperar la clave. Roles en `ROLES` (`user`, `admin`) y permisos con `can(user, "…")`; los correos de `ADMIN_EMAILS` quedan como admin al confirmar su correo.
+- `app/admin`: panel con instalaciones, dispositivos activos, cuentas, alertas, uso del asistente y gestión de usuarios (rol y desactivar).
+- `lib/push.js`: alertas push. Cada minuto revisa los marcadores de ESPN y avisa el inicio, los partidos cerrados (≤ 5 puntos con menos de 5 min del último cuarto) y el final a quien sigue a esos equipos. Las suscripciones van en la base; arranca desde `instrumentation.js` si están `VAPID_PUBLIC_KEY` y `VAPID_PRIVATE_KEY`.
 - `public/sw.js`: service worker (red primero, caché como respaldo) y las notificaciones push.
 - El asistente tiene un tope de preguntas por IP y por día (`CHAT_PER_HOUR`, `CHAT_PER_DAY`).
 

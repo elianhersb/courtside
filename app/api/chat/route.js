@@ -2,12 +2,12 @@ import Anthropic from "@anthropic-ai/sdk";
 import { getScoreboard, getGame, searchPlayers, getPlayer, getLeaders, getInjuries } from "@/lib/espn";
 import { getSeason } from "@/lib/season";
 import { getCup } from "@/lib/cup";
-import { limiter, sameOrigin } from "@/lib/ratelimit";
+import { limiter, sameOrigin, ipOf } from "@/lib/ratelimit";
+import { count } from "@/lib/db";
 
 // Topes para que nadie gaste la key: por IP y en total por día (configurables por entorno).
 const perIp = limiter(Number(process.env.CHAT_PER_HOUR) || 20, 3600e3);
 const perDay = limiter(Number(process.env.CHAT_PER_DAY) || 500, 86400e3);
-const ipOf = (req) => req.headers.get("x-forwarded-for")?.split(",")[0].trim() || req.headers.get("x-real-ip") || "local";
 
 const tools = [
   {
@@ -127,6 +127,7 @@ export async function POST(req) {
     .filter((m) => (m.role === "user" || m.role === "assistant") && typeof m.content === "string" && m.content.trim())
     .map((m) => ({ role: m.role, content: m.content.slice(0, 2000) }));
   if (messages.at(-1)?.role !== "user") return Response.json({ error: "Falta la pregunta" }, { status: 400 });
+  count("chat");
 
   const today = new Intl.DateTimeFormat("es-VE", { dateStyle: "full", timeZone: "America/Caracas" }).format(new Date());
   const cards = [];

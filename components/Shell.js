@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import C from "./cs";
 import { ChatProvider, ChatFab } from "./Chat";
@@ -9,9 +9,28 @@ const DEFAULTS = { favs: [], subs: ["leaguepass"], country: "VE", theme: "dark",
 const KEY = "courtside:prefs";
 const Prefs = createContext([DEFAULTS, () => {}]);
 export const usePrefs = () => useContext(Prefs);
+// Cuenta opcional: { user, ready, refresh, logout }. Sin cuenta la app funciona igual, con la configuración en el navegador.
+const Account = createContext({ user: null, ready: false, refresh: async () => {}, logout: async () => {} });
+export const useAccount = () => useContext(Account);
 
 const TABS = { hoy: "/", jugadores: "/jugadores", liga: "/temporada", asistente: "/asistente", perfil: "/perfil" };
-const tabOf = (path) => (path.startsWith("/copa") ? "liga" : Object.keys(TABS).find((k) => k !== "hoy" && path.startsWith(TABS[k])) || "hoy");
+const tabOf = (path) => (path.startsWith("/copa") ? "liga" : path.startsWith("/cuenta") || path.startsWith("/admin") ? "perfil" : Object.keys(TABS).find((k) => k !== "hoy" && path.startsWith(TABS[k])) || "hoy");
+
+// Id anónimo del dispositivo para contar instalaciones y visitas; no contiene datos personales.
+function deviceId() {
+  try {
+    let id = localStorage.getItem("courtside:device");
+    if (!id) { id = crypto.randomUUID(); localStorage.setItem("courtside:device", id); }
+    return id;
+  } catch { return null; }
+}
+const platform = () => (/android/i.test(navigator.userAgent) ? "android" : /iphone|ipad|ipod/i.test(navigator.userAgent) ? "ios" : "desktop");
+const track = (extra) => {
+  const id = deviceId();
+  if (!id) return;
+  const standalone = matchMedia("(display-mode: standalone)").matches || !!navigator.standalone;
+  fetch("/api/track", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id, platform: platform(), standalone, ...extra }), keepalive: true }).catch(() => {});
+};
 
 function read() {
   try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch { return DEFAULTS; }
@@ -23,12 +42,39 @@ export default function Shell({ children }) {
   const [install, setInstall] = useState(null); // null | "ios" | "android"
   const [deferred, setDeferred] = useState(null);
 
-  useEffect(() => { setPrefs(read()); }, []);
+  const [account, setAccount] = useState({ user: null, ready: false });
+  const synced = useRef(false);
+
   const update = (patch) => setPrefs((p) => {
     const next = { ...p, ...patch };
     try { localStorage.setItem(KEY, JSON.stringify(next)); } catch {}
     return next;
   });
+  // Al entrar: si la cuenta ya tiene configuración guardada, manda esa; si no, se sube la de este navegador.
+  const refresh = async () => {
+    const r = await fetch("/api/me").then((x) => x.json()).catch(() => ({ user: null }));
+    if (r.user && r.prefs) update({ ...r.prefs, push: read().push });
+    synced.current = !!r.user && !!r.prefs;
+    setAccount({ user: r.user, ready: true });
+  };
+  const logout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+    synced.current = false;
+    setAccount({ user: null, ready: true });
+  };
+
+  useEffect(() => { setPrefs(read()); refresh(); track(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Con sesión, cada cambio de configuración se guarda en la cuenta (sin el estado de las alertas, que es de cada dispositivo).
+  useEffect(() => {
+    if (!account.user) return;
+    const t = setTimeout(() => {
+      const { push, ...rest } = prefs; // eslint-disable-line no-unused-vars
+      fetch("/api/me", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ prefs: rest }) }).catch(() => {});
+      synced.current = true;
+    }, synced.current ? 800 : 0);
+    return () => clearTimeout(t);
+  }, [account.user, prefs]);
 
   // Con las alertas activas, el servidor necesita saber los equipos y avisos elegidos.
   useEffect(() => {
@@ -59,6 +105,7 @@ export default function Shell({ children }) {
     try { dismissed = !!localStorage.getItem("courtside:install-dismissed"); } catch {}
     if (standalone || dismissed) return;
     const onPrompt = (e) => { e.preventDefault(); setDeferred(e); setInstall("android"); };
+    addEventListener("appinstalled", () => track({ installed: true }), { once: true });
     addEventListener("beforeinstallprompt", onPrompt);
     const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
     const t = ios ? setTimeout(() => setInstall("ios"), 4000) : null;
@@ -77,6 +124,7 @@ export default function Shell({ children }) {
 
   return (
     <Prefs.Provider value={[prefs, update]}>
+    <Account.Provider value={{ ...account, refresh, logout }}>
       <ChatProvider>
       <div className="cs-app">
         <div className="cs-desk-only"><C.SideRail value={tabOf(path)} onChange={(k) => router.push(TABS[k])} /></div>
@@ -95,6 +143,7 @@ export default function Shell({ children }) {
         ) : null}
       </div>
       </ChatProvider>
+    </Account.Provider>
     </Prefs.Provider>
   );
 }

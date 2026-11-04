@@ -5,6 +5,7 @@ import { usePrefs } from "@/components/Shell";
 import { COUNTRIES } from "@/lib/channels";
 import { tz } from "@/lib/format";
 import { pushSupported, enablePush, disablePush } from "@/lib/pushClient";
+import AccountCard from "@/components/AccountCard";
 
 const SUBS = ["disney", "espn", "leaguepass", "prime", "peacock", "meridiano", "televen", "nbc", "abc"];
 const NOTIFY = [["start", "Inicio de partido", "De tus equipos favoritos"], ["end", "Resultado final", "Marcador al terminar"], ["close", "Partidos cerrados", "Diferencia ≤ 5 en el último cuarto"]];
@@ -15,7 +16,8 @@ export default function Profile() {
   const [push, setPush] = useState({ busy: false, error: null });
   // Se mira en el cliente: en el servidor no hay navigator y el HTML no coincidiría.
   const [supported, setSupported] = useState(true);
-  useEffect(() => setSupported(pushSupported()), []);
+  const [notice, setNotice] = useState(null);
+  useEffect(() => { setSupported(pushSupported()); setNotice(new URLSearchParams(location.search).get("correo")); }, []);
   const togglePush = async (on) => {
     setPush({ busy: true, error: null });
     try {
@@ -33,6 +35,7 @@ export default function Profile() {
     <>
       <div className="cs-screen-h"><h1>Perfil</h1></div>
       <div className="cs-gut cs-stack" style={{ gap: 22 }}>
+        <AccountCard key={notice || "x"} notice={notice} />
         <div className="cs-list">
           <label className="cs-li">
             <C.Icon name="globe" style={{ width: 20, height: 20, color: "var(--ink-muted)" }} />
