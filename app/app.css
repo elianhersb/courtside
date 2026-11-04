@@ -277,3 +277,77 @@ body { padding: 0; overscroll-behavior: none; }
 /* Hoy: tarjetas de partidos en rejilla cuando hay ancho. */
 .cs-games { display: grid; gap: 14px; }
 @media (min-width: 900px) { .cs-games { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); } }
+
+/* Pestaña Liga: selector Temporada / Copa. */
+.cs-league-sw { display: flex; gap: 6px; margin: calc(10px + env(safe-area-inset-top)) 16px 10px; padding: 4px; border-radius: var(--radius-pill); background: var(--surface); border: 1px solid var(--line); }
+.cs-league-sw a { flex: 1; display: grid; place-items: center; height: 34px; border-radius: var(--radius-pill); font-size: 13px; font-weight: 700; color: var(--ink-muted); text-decoration: none; transition: background var(--dur-fast), color var(--dur-fast); }
+.cs-league-sw a.is-on { color: var(--on-brand); background: linear-gradient(135deg, var(--brand-ink), var(--brand)); box-shadow: 0 4px 14px color-mix(in srgb, var(--brand) 35%, transparent); }
+.cs-league-sw + .cs-cup-hero { padding-top: 18px; border-radius: var(--radius-xl); }
+@media (min-width: 900px) { .cs-app .cs-league-sw { margin: 0 0 16px; width: 380px; } }
+.cs-cup-hero.is-season { flex-wrap: wrap; }
+.cs-cup-hero.is-season .cs-cup-hero-ic { color: var(--on-brand); background: linear-gradient(145deg, #ffb27a, var(--brand) 55%, var(--brand-ink)); box-shadow: 0 10px 30px color-mix(in srgb, var(--brand) 45%, transparent), inset 0 1px 0 rgba(255,255,255,.5); }
+.cs-phone-only { display: block; }
+.cs-desk-show { display: none; }
+@media (min-width: 1100px) { .cs-phone-only { display: none; } .cs-desk-show { display: block; } }
+
+/* Posiciones. */
+.cs-stds { display: grid; gap: 22px; }
+@media (min-width: 1100px) { .cs-stds { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; } }
+.cs-std { display: grid; gap: 12px; }
+.cs-std-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 6px; box-shadow: var(--shadow-card); animation: cs-enter var(--dur-base) var(--ease-out) both; }
+.cs-std-row { position: relative; display: grid; grid-template-columns: 22px minmax(0, 1fr) 28px 28px 46px 38px; align-items: center; gap: 6px; min-height: 44px; padding: 0 8px; border-radius: 9px; font-size: 14px; }
+@media (min-width: 480px) { .cs-std-row { grid-template-columns: 22px minmax(0, 1fr) 28px 28px 46px 38px 46px 50px; } }
+@media (min-width: 1400px) { .cs-std-row { grid-template-columns: 22px minmax(0, 1fr) 28px 28px 46px 38px 46px 50px 52px 52px; } }
+.cs-std-x, .cs-std-xx { display: none; }
+@media (min-width: 480px) { .cs-std-x { display: block; } }
+@media (min-width: 1400px) { .cs-std-xx { display: block; } }
+.cs-std-row + .cs-std-row { border-top: 1px solid var(--line); }
+.cs-std-head { min-height: 28px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-subtle); }
+.cs-std-head span:nth-child(n+3) { text-align: right; }
+.cs-std-row.is-cut { border-bottom: 2px dashed var(--line-strong); border-radius: 9px 9px 0 0; }
+.cs-std-row.is-cut + .cs-std-row { border-top-color: transparent; }
+.cs-std-row::before { content: ""; position: absolute; left: 0; top: 9px; bottom: 9px; width: 3px; border-radius: 2px; }
+.cs-std-row.is-z1::before { background: var(--brand); }
+.cs-std-row.is-z2::before { background: var(--star); }
+.cs-std-head::before { display: none; }
+.cs-std-row.is-z3 { opacity: .78; }
+.cs-std-row.is-z1:nth-child(2) { background: linear-gradient(90deg, color-mix(in srgb, var(--c, var(--brand)) 22%, transparent), transparent 75%); }
+.cs-std-row.is-fav .cs-grp-team b::after { content: " ★"; color: var(--star); }
+.cs-std-row .cs-grp-team em { display: none; }
+@media (min-width: 480px) { .cs-std-row .cs-grp-team em { display: inline; } }
+.cs-grp-team em.is-in { color: var(--brand-ink); background: var(--brand-soft); }
+.cs-grp-team em.is-playin { color: var(--star); background: color-mix(in srgb, var(--star) 16%, transparent); }
+.cs-grp-team em.is-out { color: var(--ink-subtle); background: var(--surface-raised); }
+.cs-std-legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 12px; color: var(--ink-muted); }
+.cs-std-legend span { display: inline-flex; align-items: center; gap: 7px; }
+.cs-std-legend span::before { content: ""; width: 10px; height: 10px; border-radius: 3px; background: var(--line-strong); }
+.cs-std-legend .is-z1::before { background: var(--brand); } .cs-std-legend .is-z2::before { background: var(--star); }
+
+/* Play-in. */
+.cs-pi { display: grid; gap: 22px; }
+@media (min-width: 900px) { .cs-pi { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; } }
+.cs-pi-conf { display: grid; gap: 10px; align-content: start; }
+
+/* Llave de playoffs: 3 rondas por lado. */
+.cs-mt-wins { display: inline-flex; align-items: center; gap: 3px; }
+.cs-mt-wins i { width: 7px; height: 7px; border-radius: 50%; background: var(--surface-raised); border: 1px solid var(--line-strong); }
+.cs-mt-wins i.is-on { background: var(--brand); border-color: var(--brand); }
+.cs-mt-side.is-win .cs-mt-wins i.is-on { background: var(--star); border-color: var(--star); }
+.cs-mt-wins em { min-width: 12px; margin-left: 4px; font-style: normal; font-family: var(--font-display); font-size: 18px; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+.cs-br-po .cs-br-side { gap: 18px; }
+@media (min-width: 640px) and (max-width: 1279px) { .cs-br-po .cs-br-side { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; } }
+@media (min-width: 1280px) {
+  .cs-br.cs-br-po { grid-template-columns: minmax(0, 1fr) minmax(200px, 240px) minmax(0, 1fr); gap: 0; align-items: stretch; }
+  .cs-br-po .cs-mt-wins i { width: 6px; height: 6px; }
+  .cs-br-po .cs-br-side { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; align-items: center; }
+  .cs-br-po .cs-br-side.is-east { direction: rtl; } .cs-br-po .cs-br-side.is-east > * { direction: ltr; }
+  .cs-br-po .cs-br-side { padding-top: 26px; align-items: stretch; }
+  .cs-br-po .cs-br-round { position: relative; height: 100%; align-content: space-around; }
+  .cs-br-po .cs-br-round > .cs-br-h { position: absolute; top: -26px; left: 0; right: 0; }
+  .cs-br-po .cs-br-round .cs-mt::after { content: ""; position: absolute; top: 50%; width: 10px; border-top: 2px solid var(--line-strong); }
+  .cs-br-po .is-west .cs-br-round .cs-mt::after { left: 100%; } .cs-br-po .is-east .cs-br-round .cs-mt::after { right: 100%; }
+  .cs-br-po .cs-mt-side { padding: 0 6px; gap: 7px; }
+}
+.cs-cup-hero.is-season h1 { font-size: 28px; white-space: nowrap; }
+.cs-season-pick { flex-basis: 100%; }
+@media (min-width: 640px) { .cs-season-pick { flex-basis: auto; margin-left: auto; } .cs-cup-hero.is-season h1 { font-size: 34px; } }

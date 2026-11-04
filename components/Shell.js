@@ -9,8 +9,8 @@ const KEY = "courtside:prefs";
 const Prefs = createContext([DEFAULTS, () => {}]);
 export const usePrefs = () => useContext(Prefs);
 
-const TABS = { hoy: "/", jugadores: "/jugadores", copa: "/copa", asistente: "/asistente", perfil: "/perfil" };
-const tabOf = (path) => Object.keys(TABS).find((k) => k !== "hoy" && path.startsWith(TABS[k])) || "hoy";
+const TABS = { hoy: "/", jugadores: "/jugadores", liga: "/temporada", asistente: "/asistente", perfil: "/perfil" };
+const tabOf = (path) => (path.startsWith("/copa") ? "liga" : Object.keys(TABS).find((k) => k !== "hoy" && path.startsWith(TABS[k])) || "hoy");
 
 function read() {
   try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch { return DEFAULTS; }

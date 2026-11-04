@@ -304,7 +304,7 @@ const C = (function () {
   }
 
   /* ================= Navegación inferior ================= */
-  var NAV = [["hoy", "Hoy", "today"], ["jugadores", "Jugadores", "players"], ["copa", "Copa", "trophy"], ["asistente", "Asistente", "assistant"], ["perfil", "Perfil", "profile"]];
+  var NAV = [["hoy", "Hoy", "today"], ["jugadores", "Jugadores", "players"], ["liga", "Liga", "trophy"], ["asistente", "Asistente", "assistant"], ["perfil", "Perfil", "profile"]];
   function BottomNav(p) {
     return h("nav", { className: "cs-nav", "aria-label": "Principal" }, NAV.map(function (n) {
       var on = p.value === n[0];

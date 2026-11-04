@@ -5,11 +5,10 @@ import C from "@/components/cs";
 import { usePrefs } from "@/components/Shell";
 import { useJson } from "@/lib/useJson";
 import { timeOf } from "@/lib/format";
+import { Match, Trophy, LeagueSwitch, day, teamName as name } from "@/components/Bracket";
 
 const CONF = { East: "Este", West: "Oeste" };
 const PHASE = { groups: "Fase de grupos", knockout: "Eliminatorias", done: "Finalizada" };
-const day = (iso) => new Intl.DateTimeFormat("es-VE", { weekday: "short", day: "numeric", month: "short" }).format(new Date(iso));
-const name = (tri) => C.TEAMS[tri]?.name || tri;
 
 function GroupCard({ g, favs, i }) {
   const played = g.rows.reduce((n, r) => n + r.played, 0) / 2;
@@ -65,37 +64,6 @@ function Groups({ data, favs }) {
   );
 }
 
-function Side({ s, winner, live }) {
-  if (!s) return <div className="cs-mt-side is-tbd"><span className="cs-mt-logo" /><b>Por definir</b></div>;
-  const lost = winner && winner !== s.tri;
-  return (
-    <div className={`cs-mt-side${winner === s.tri ? " is-win" : ""}${lost ? " is-lost" : ""}`}>
-      {s.seed ? <span className="cs-mt-seed">{s.seed}</span> : null}
-      <C.TeamLogo team={s.tri} size="sm" />
-      <b>{name(s.tri)}</b>
-      {s.score !== undefined ? <span className={`cs-mt-score${live ? " is-live" : ""}`}>{s.score}</span> : null}
-    </div>
-  );
-}
-
-function Match({ m, label, big }) {
-  const live = m.status === "live";
-  const foot = live ? <C.LiveBadge clock={m.clock} />
-    : m.status === "final" ? "Final"
-    : m.date ? `${day(m.date)} · ${timeOf(m.date)}`
-    : m.projected && m.a && m.b ? "Proyección" : "";
-  const body = (
-    <>
-      {label ? <div className="cs-mt-label">{label}</div> : null}
-      <Side s={m.a} winner={m.winner} live={live} />
-      <Side s={m.b} winner={m.winner} live={live} />
-      {foot ? <div className="cs-mt-foot">{foot}</div> : null}
-    </>
-  );
-  const cls = `cs-mt${big ? " is-final" : ""}${m.projected ? " is-proj" : ""}${live ? " is-live" : ""}`;
-  return m.id ? <Link href={`/partido/${m.id}`} className={`${cls} cs-press`}>{body}</Link> : <div className={cls}>{body}</div>;
-}
-
 function Bracket({ data }) {
   const b = data.bracket;
   const col = (conf) => (
@@ -112,9 +80,7 @@ function Bracket({ data }) {
       <div className="cs-br">
         <div className="cs-br-side is-west">{col("West")}</div>
         <div className="cs-br-center">
-          <div className={`cs-br-trophy${b.champion ? " has-champ" : ""}`}>
-            {b.champion ? <C.TeamLogo team={b.champion} size="lg" /> : <C.Icon name="trophy" weight={1.6} />}
-          </div>
+          <Trophy champion={b.champion} />
           <div className="cs-br-h">{b.champion ? `Campeón: ${name(b.champion)}` : "Final"}</div>
           <Match m={b.final} big />
           <div className="cs-subtle" style={{ fontSize: 12, textAlign: "center" }}>{data.finalVenue}<br />{day(`${data.finalDate}T20:00:00-05:00`)}</div>
@@ -133,6 +99,7 @@ export default function Cup() {
 
   return (
     <>
+      <LeagueSwitch />
       <div className="cs-cup-hero">
         <div className="cs-cup-hero-ic"><C.Icon name="trophy" weight={1.8} /></div>
         <div style={{ minWidth: 0 }}>

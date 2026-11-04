@@ -1,5 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getScoreboard, getGame, searchPlayers, getPlayer, getLeaders, getInjuries } from "@/lib/espn";
+import { getSeason } from "@/lib/season";
+import { getCup } from "@/lib/cup";
 
 const tools = [
   {
@@ -38,7 +40,23 @@ const tools = [
     input_schema: { type: "object", properties: { team: { type: "string" } }, required: ["team"], additionalProperties: false },
     strict: true,
   },
+  {
+    name: "get_standings",
+    description: "Temporada actual: tabla de posiciones por conferencia (puesto, G-P, juegos detrás, racha, últimos 10), el play-in y la llave de playoffs (series reales con victorias, o la proyección si aún no empiezan).",
+    input_schema: { type: "object", properties: {}, additionalProperties: false },
+    strict: true,
+  },
+  {
+    name: "get_cup",
+    description: "Copa NBA (Emirates NBA Cup) de esta temporada: tabla de cada grupo, carrera por el wild card, llave de eliminatorias (cuartos, semis y final) y próximos partidos de la Copa.",
+    input_schema: { type: "object", properties: {}, additionalProperties: false },
+    strict: true,
+  },
 ];
+
+// Resúmenes compactos para el modelo: menos tokens y nada que tenga que deducir.
+const sideOf = (m) => [m.a, m.b].map((t) => (t ? `${t.tri}${t.wins !== undefined ? ` ${t.wins}` : t.score !== undefined ? ` ${t.score}` : ""}` : "por definir")).join(" vs ");
+const matchOf = (m) => ({ cruce: sideOf(m), estado: m.winner ? `ganó ${m.winner}` : m.projected ? "proyección" : m.status });
 
 async function runTool(name, input, cards) {
   if (name === "get_games") {
@@ -62,6 +80,21 @@ async function runTool(name, input, cards) {
     const all = await getInjuries();
     const team = (input.team || "").toUpperCase();
     return team ? all.filter((i) => i.team === team) : all.slice(0, 40);
+  }
+  if (name === "get_standings") {
+    const s = await getSeason();
+    const table = Object.fromEntries(Object.entries(s.standings).map(([c, rows]) => [c, rows.map((r) => `${r.seed}. ${r.tri} ${r.w}-${r.l} JD ${r.gb} racha ${r.streak} últ10 ${r.l10}${r.clinch ? ` (${{ in: "clasificado", playin: "play-in", out: "eliminado" }[r.clinch]})` : ""}`)]));
+    const b = s.bracket, conf = (c) => ({ primera_ronda: b[c].r1.map(matchOf), semifinales: b[c].sf.map(matchOf), final_conferencia: matchOf(b[c].cf) });
+    return { temporada: s.label, fase: s.phase, tabla: table, play_in: Object.fromEntries(Object.entries(s.playin).map(([c, p]) => [c, [p.a, p.b, p.c].map(matchOf)])), playoffs: { East: conf("East"), West: conf("West"), finales: matchOf(b.finals), campeon: b.champion } };
+  }
+  if (name === "get_cup") {
+    const c = await getCup();
+    return {
+      fase: c.phase, final: `${c.finalDate} · ${c.finalVenue}`,
+      grupos: c.groups.map((g) => ({ grupo: `${g.conf} ${g.name}`, lider: g.rows[0].tri, tabla: g.rows.map((r, i) => `${i + 1}. ${r.tri} ${r.w}-${r.l} dif ${r.diff}${r.badge ? ` (${r.badge === "leader" ? "líder" : "wild card"})` : ""}`) })),
+      llave: { East: [...c.bracket.East.qf, c.bracket.East.sf].map(matchOf), West: [...c.bracket.West.qf, c.bracket.West.sf].map(matchOf), final: matchOf(c.bracket.final), campeon: c.bracket.champion },
+      proximos: c.upcoming.map((g) => `${g.date} ${g.away.tri} @ ${g.home.tri}`),
+    };
   }
   throw new Error(`Herramienta desconocida: ${name}`);
 }
@@ -93,7 +126,7 @@ export async function POST(req) {
       const res = await client.beta.messages.create({
         model: process.env.CHAT_MODEL || "claude-haiku-5-5",
         max_tokens: 16000,
-        output_config: { effort: "low" },
+        output_config: { effort: "medium" },
         // El respaldo ante rechazos es de la API de Anthropic; OpenRouter no lo acepta.
         ...(process.env.ANTHROPIC_BASE_URL ? {} : { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" }),
         system: system(today),
