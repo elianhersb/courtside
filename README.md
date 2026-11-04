@@ -38,6 +38,7 @@ docker run -d --env-file .env.local -p 3000:3000 ghcr.io/elianhersb/courtside:la
 - `components/cs.js`: sistema de componentes exportado de Claude Design (no editar a mano salvo para conectar eventos). Estilos en `app/tokens.css` y `app/courtside.css`.
 - `lib/espn.js`: datos desde la API pública de ESPN (no oficial), normalizados al formato de los componentes.
 - `lib/channels.js`: reglas de "Dónde verlo" por país.
+- `lib/cup.js`: Copa NBA. Los grupos de cada temporada se cargan a mano en `SEASON` (ESPN no los publica); la tabla, el wild card y la llave se calculan con los resultados.
 - `app/api/*`: rutas que consulta la app; `app/api/chat` es el asistente (Claude con herramientas que llaman a `lib/espn.js`).
 - `public/sw.js`: service worker (red primero, caché como respaldo).
 

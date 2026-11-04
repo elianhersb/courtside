@@ -38,6 +38,7 @@ const C = (function () {
     players: "M8 3h8l1.2 2.2L21 6.5V12l-3-1v10H6V11l-3 1V6.5l3.8-1.3z",
     assistant: "M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8zM18.5 15l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z",
     profile: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c.8-4 4-6 8-6s7.2 2 8 6",
+    trophy: "M7 4h10v5a5 5 0 0 1-10 0zM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M12 14v3M8 21h8M9 17h6v4H9z",
     star: "M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z",
     bell: "M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9zM10 20a2 2 0 0 0 4 0",
     search: "M10.5 18a7.5 7.5 0 1 0 0-15 7.5 7.5 0 0 0 0 15zM21 21l-5.2-5.2",
@@ -303,7 +304,7 @@ const C = (function () {
   }
 
   /* ================= Navegación inferior ================= */
-  var NAV = [["hoy", "Hoy", "today"], ["jugadores", "Jugadores", "players"], ["asistente", "Asistente", "assistant"], ["perfil", "Perfil", "profile"]];
+  var NAV = [["hoy", "Hoy", "today"], ["jugadores", "Jugadores", "players"], ["copa", "Copa", "trophy"], ["asistente", "Asistente", "assistant"], ["perfil", "Perfil", "profile"]];
   function BottomNav(p) {
     return h("nav", { className: "cs-nav", "aria-label": "Principal" }, NAV.map(function (n) {
       var on = p.value === n[0];

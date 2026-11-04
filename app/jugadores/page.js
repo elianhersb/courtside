@@ -25,6 +25,25 @@ function Row({ x, i }) {
   );
 }
 
+// Destacado: el líder de una categoría con foto grande sobre el color de su equipo.
+function Spot({ board, bad, i }) {
+  const top = board.players[0];
+  if (!top) return null;
+  const t = C.TEAMS[top.team] || {};
+  const pct = board.unit === "%";
+  return (
+    <Link href={`/jugadores/${top.id}`} className={`cs-spot cs-press${bad ? " is-bad" : ""}`} style={{ "--c": t.color || "var(--brand)", "--c2": t.color2 || "var(--surface)", "--i": i }}>
+      <img src={C.headshotUrl(top.id)} alt="" loading="lazy" onError={(e) => (e.currentTarget.style.visibility = "hidden")} />
+      <span className="cs-spot-logo"><C.TeamLogo team={top.team} size="md" /></span>
+      <div className="cs-spot-info">
+        <span className="cs-eyebrow">{board.title}</span>
+        <b className="cs-spot-v"><C.CountUp value={top.value} decimals={1} suffix={pct ? "%" : ""} />{pct ? null : <small>{board.unit}</small>}</b>
+        <span className="cs-spot-name">{top.name}</span>
+      </div>
+    </Link>
+  );
+}
+
 function LeaderCard({ board, bad, i }) {
   const [top, ...rest] = board.players;
   if (!top) return null;
@@ -61,16 +80,21 @@ function LeaderCard({ board, bad, i }) {
 function Injuries({ list, favs }) {
   const [filter, setFilter] = useState("all");
   const shown = filter === "mine" ? list.filter((x) => favs.includes(x.team)) : list;
+  const out = shown.filter((x) => x.out).length;
   return (
-    <div className="cs-stack" style={{ gap: 12 }}>
-      <div className="cs-row" style={{ justifyContent: "space-between" }}>
+    <div className="cs-stack" style={{ gap: 14 }}>
+      <div className="cs-inj-top">
         <C.Segmented items={[{ key: "all", label: "Toda la liga" }, { key: "mine", label: "Mis equipos" }]} value={filter} onChange={setFilter} />
-        <span className="cs-subtle" style={{ fontSize: 12 }}>{shown.length} jugadores</span>
+        <div className="cs-inj-sum">
+          <span><b>{shown.length}</b> reportados</span>
+          <span className="is-out"><b>{out}</b> fuera</span>
+          <span className="is-dtd"><b>{shown.length - out}</b> en duda</span>
+        </div>
       </div>
       {shown.length ? (
-        <div className="cs-list">
+        <div className="cs-inj-grid">
           {shown.map((x, i) => (
-            <Link key={x.id + x.date} href={`/jugadores/${x.id}`} className="cs-li cs-press cs-enter" style={{ width: "100%", textDecoration: "none", color: "inherit", "--i": Math.min(i, 12), alignItems: "flex-start" }}>
+            <Link key={x.id + x.date} href={`/jugadores/${x.id}`} className={`cs-li cs-inj cs-press cs-enter${x.out ? " is-out" : ""}`} style={{ width: "100%", textDecoration: "none", color: "inherit", "--i": Math.min(i, 12), "--c": (C.TEAMS[x.team] || {}).color, alignItems: "flex-start" }}>
               <C.PlayerAvatar id={x.id} name={x.name} size="md" team={x.team} />
               <div className="cs-li-main">
                 <div className="cs-row" style={{ gap: 8, justifyContent: "space-between", flexWrap: "nowrap" }}>
@@ -120,6 +144,8 @@ export default function Players() {
       : boards ? (
         <>
           {tab === "worst" ? <p className="cs-muted" style={{ fontSize: 13, margin: "0 4px 12px" }}>Entre los jugadores con suficientes partidos y tiros para calificar.</p> : null}
+          <div className="cs-spots">{boards.slice(0, 4).map((b, i) => <Spot key={b.key + tab} board={b} bad={tab === "worst"} i={i} />)}</div>
+          <div className="cs-eyebrow" style={{ margin: "22px 4px 10px" }}>Top 5 por categoría</div>
           <div className="cs-leads">{boards.map((b, i) => <LeaderCard key={b.key + tab} board={b} bad={tab === "worst"} i={i} />)}</div>
         </>
       ) : skeleton;
@@ -127,8 +153,10 @@ export default function Players() {
 
   return (
     <>
-      <div className="cs-screen-h"><div><h1>Jugadores</h1><div className="cs-muted" style={{ fontSize: 13, marginTop: 2 }}>Temporada regular · promedios por partido</div></div></div>
-      <div className="cs-gut"><C.SearchField placeholder="Busca un jugador por nombre" value={q} onChange={setQ} /></div>
+      <div className="cs-pl-head">
+        <div className="cs-screen-h"><div><h1>Jugadores</h1><div className="cs-muted" style={{ fontSize: 13, marginTop: 2 }}>Temporada regular · promedios por partido</div></div></div>
+        <div className="cs-gut cs-pl-search"><C.SearchField placeholder="Busca un jugador por nombre" value={q} onChange={setQ} /></div>
+      </div>
       {searching ? (
         <div className="cs-gut" style={{ marginTop: 16 }}>
           <div className="cs-eyebrow" style={{ margin: "0 4px 8px" }}>Resultados para “{term}”{search.data ? ` · ${search.data.length}` : ""}</div>

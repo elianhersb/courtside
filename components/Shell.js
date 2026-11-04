@@ -2,30 +2,18 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import C from "./cs";
+import { ChatProvider, ChatFab } from "./Chat";
 
 const DEFAULTS = { favs: [], subs: ["leaguepass"], country: "VE", theme: "dark", notify: { start: true, end: false, close: true } };
 const KEY = "courtside:prefs";
 const Prefs = createContext([DEFAULTS, () => {}]);
 export const usePrefs = () => useContext(Prefs);
 
-const TABS = { hoy: "/", jugadores: "/jugadores", asistente: "/asistente", perfil: "/perfil" };
-const tabOf = (path) => (path.startsWith("/jugadores") ? "jugadores" : path.startsWith("/asistente") ? "asistente" : path.startsWith("/perfil") ? "perfil" : "hoy");
+const TABS = { hoy: "/", jugadores: "/jugadores", copa: "/copa", asistente: "/asistente", perfil: "/perfil" };
+const tabOf = (path) => Object.keys(TABS).find((k) => k !== "hoy" && path.startsWith(TABS[k])) || "hoy";
 
 function read() {
   try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch { return DEFAULTS; }
-}
-
-// Panel derecho en escritorio: pregunta rápida al asistente.
-function DeskAside({ onAsk }) {
-  return (
-    <aside className="cs-desk-only cs-aside">
-      <div className="cs-eyebrow">Pregunta al asistente</div>
-      <C.Composer placeholder="¿Quién lidera en anotación?" onSend={onAsk} />
-      <div className="cs-row">
-        {["¿Qué pasó ayer en la NBA?", "¿Quién juega hoy?"].map((s) => <C.SuggestionChip key={s} onClick={() => onAsk(s)}>{s}</C.SuggestionChip>)}
-      </div>
-    </aside>
-  );
 }
 
 export default function Shell({ children }) {
@@ -81,10 +69,11 @@ export default function Shell({ children }) {
 
   return (
     <Prefs.Provider value={[prefs, update]}>
+      <ChatProvider>
       <div className="cs-app">
         <div className="cs-desk-only"><C.SideRail value={tabOf(path)} onChange={(k) => router.push(TABS[k])} /></div>
         <div className="cs-phone-scroll" key={path}>{children}</div>
-        {path.startsWith("/asistente") ? null : <DeskAside onAsk={(q) => router.push(`/asistente?q=${encodeURIComponent(q)}`)} />}
+        {path.startsWith("/asistente") ? null : <ChatFab />}
         <div className="cs-phone-nav">
           <C.BottomNav value={tabOf(path)} onChange={(k) => router.push(TABS[k])} />
         </div>
@@ -97,6 +86,7 @@ export default function Shell({ children }) {
           </>
         ) : null}
       </div>
+      </ChatProvider>
     </Prefs.Provider>
   );
 }

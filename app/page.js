@@ -38,9 +38,11 @@ export default function Today() {
     return (
       <div key={status} className="cs-stack" style={{ gap: 14 }}>
         <div className="cs-eyebrow" style={{ margin: "8px 4px 0" }}>{title}</div>
-        {items.map((g) => (
-          <C.GameCard key={g.id} game={g} index={idx++} owned={prefs.subs} favorite={isFav(g)} onToggleFav={() => toggle(g)} onPress={() => router.push(`/partido/${g.id}`)} />
-        ))}
+        <div className="cs-games">
+          {items.map((g) => (
+            <C.GameCard key={g.id} game={g} index={idx++} owned={prefs.subs} favorite={isFav(g)} onToggleFav={() => toggle(g)} onPress={() => router.push(`/partido/${g.id}`)} />
+          ))}
+        </div>
       </div>
     );
   };
