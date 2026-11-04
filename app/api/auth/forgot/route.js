@@ -1,4 +1,4 @@
-import { appUrl, issueToken, userByEmail, validEmail } from "@/lib/auth";
+import { appUrl, emailError, issueToken, userByEmail } from "@/lib/auth";
 import { fail, guarded } from "@/lib/guard";
 import { resetMail, sendMail } from "@/lib/mail";
 
@@ -6,7 +6,8 @@ export async function POST(req) {
   const { bad, body } = await guarded(req);
   if (bad) return bad;
   const email = String(body.email || "").trim();
-  if (!validEmail(email)) return fail("Escribe un correo válido");
+  const invalid = emailError(email);
+  if (invalid) return fail(invalid);
   const u = userByEmail(email);
   if (u && !u.disabled) {
     const link = `${appUrl(req)}/cuenta/clave?token=${issueToken(u.id, "reset", 3600e3)}`;

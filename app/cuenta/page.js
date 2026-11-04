@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import C from "@/components/cs";
 import { useAccount } from "@/components/Shell";
 import { Field, Form, GoogleButton, post } from "@/components/AuthForm";
+import { confirmError, emailError, nameError, passwordError } from "@/lib/validate";
 
 const ERRORS = {
   google: "No se pudo entrar con Google. Intenta de nuevo.",
@@ -32,16 +33,19 @@ function Account() {
         <C.Segmented items={[{ key: "login", label: "Entrar" }, { key: "signup", label: "Crear cuenta" }]} value={mode} onChange={setMode} />
         {mode === "login" ? (
           <Form key="login" submit="Entrar" onSubmit={async (v) => { await post("/api/auth/login", v); await done(); }}
+            validate={(v) => ({ email: emailError(v.email), password: v.password ? null : "Escribe tu clave" })}
             note={<Link className="cs-auth-link" href="/cuenta/recuperar">¿Olvidaste tu clave?</Link>}>
-            <Field label="Correo" name="email" type="email" autoComplete="email" required />
-            <Field label="Clave" name="password" type="password" autoComplete="current-password" required />
+            <Field label="Correo" name="email" type="email" inputMode="email" autoComplete="email" placeholder="nombre@correo.com" required />
+            <Field label="Clave" name="password" type="password" autoComplete="current-password" placeholder="Tu clave" required />
           </Form>
         ) : (
-          <Form key="signup" submit="Crear cuenta" onSubmit={async (v) => { await post("/api/auth/register", v); await done(); }}
+          <Form key="signup" submit="Crear cuenta" onSubmit={async ({ confirm, ...v }) => { await post("/api/auth/register", v); await done(); }}
+            validate={(v) => ({ name: nameError(v.name), email: emailError(v.email), password: passwordError(v.password, v.email), confirm: confirmError(v.password, v.confirm) })}
             note={<p className="cs-subtle cs-auth-fine">Te enviaremos un correo para confirmar que es tuyo.</p>}>
-            <Field label="Nombre" name="name" autoComplete="name" maxLength={80} />
-            <Field label="Correo" name="email" type="email" autoComplete="email" required />
-            <Field label="Clave (mínimo 8 caracteres)" name="password" type="password" autoComplete="new-password" minLength={8} required />
+            <Field label="Nombre (opcional)" name="name" autoComplete="name" maxLength={80} placeholder="Cómo quieres que te llamemos" />
+            <Field label="Correo" name="email" type="email" inputMode="email" autoComplete="email" placeholder="nombre@correo.com" required />
+            <Field label="Clave" name="password" type="password" autoComplete="new-password" placeholder="Mínimo 8 caracteres" hint="Al menos 8 caracteres, con letras y números." meter required />
+            <Field label="Confirmar clave" name="confirm" type="password" autoComplete="new-password" placeholder="Repite la clave" required />
           </Form>
         )}
       </div>

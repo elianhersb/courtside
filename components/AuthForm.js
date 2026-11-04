@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
+import { createContext, useContext, useId, useRef, useState } from "react";
 import C from "./cs";
+import { strength } from "@/lib/validate";
 
 // Llamada JSON a una ruta de cuenta; devuelve el cuerpo o lanza el mensaje de error del servidor.
 export async function post(url, body, method = "POST") {
@@ -10,35 +11,75 @@ export async function post(url, body, method = "POST") {
   return j;
 }
 
-export function Field({ label, ...input }) {
+const Errors = createContext({});
+const STRENGTH = ["", "Débil", "Aceptable", "Fuerte"];
+
+// Campo con su error debajo (enlazado con aria-describedby). En las claves: botón para mostrarla y medidor opcional.
+export function Field({ label, name, type = "text", hint, meter, ...input }) {
+  const errors = useContext(Errors);
+  const [show, setShow] = useState(false);
+  const [value, setValue] = useState("");
+  const id = useId(), error = errors[name];
+  const pass = type === "password";
+  const level = meter ? strength(value) : 0;
   return (
-    <label className="cs-field">
-      <span>{label}</span>
-      <input {...input} />
-    </label>
+    <div className={`cs-field${error ? " is-invalid" : ""}`}>
+      <label htmlFor={id}>{label}</label>
+      <div className="cs-field-box">
+        <input id={id} name={name} type={pass && show ? "text" : type} aria-invalid={!!error} aria-describedby={error ? `${id}-e` : hint ? `${id}-h` : undefined}
+          onInput={(e) => setValue(e.currentTarget.value)} {...input} />
+        {pass ? (
+          <button type="button" className="cs-field-eye" onClick={() => setShow((v) => !v)} aria-pressed={show} aria-label={show ? "Ocultar clave" : "Mostrar clave"}>
+            {show ? "Ocultar" : "Mostrar"}
+          </button>
+        ) : null}
+      </div>
+      {meter && value ? (
+        <div className={`cs-meter is-${level}`} aria-live="polite">
+          <span><i /><i /><i /></span>{STRENGTH[level]}
+        </div>
+      ) : null}
+      {error ? <span className="cs-field-err" id={`${id}-e`} role="alert">{error}</span> : hint ? <span className="cs-field-hint" id={`${id}-h`}>{hint}</span> : null}
+    </div>
   );
 }
 
-// Formulario con estado de envío y error; onSubmit recibe los valores por nombre.
-export function Form({ submit, onSubmit, children, note }) {
+// Formulario: valida con validate(valores) → { campo: mensaje } antes de enviar y vuelve a validar al escribir
+// (después del primer intento) o al salir de un campo con algo escrito. onSubmit recibe los valores por nombre.
+export function Form({ submit, validate = () => ({}), onSubmit, children, note }) {
   const [state, set] = useState({ busy: false, error: null });
+  const [errors, setErrors] = useState({});
+  const tried = useRef(false), ref = useRef(null);
+  const values = () => Object.fromEntries(new FormData(ref.current));
+  const check = (only) => {
+    const all = Object.fromEntries(Object.entries(validate(values())).filter(([, v]) => v));
+    setErrors((prev) => (only ? { ...prev, [only]: all[only] } : all));
+    return all;
+  };
   const handle = async (e) => {
     e.preventDefault();
+    tried.current = true;
+    const found = check();
+    if (Object.keys(found).length) { ref.current.elements[Object.keys(found)[0]]?.focus(); return; }
     set({ busy: true, error: null });
     try {
-      await onSubmit(Object.fromEntries(new FormData(e.currentTarget)));
+      await onSubmit(values());
       set({ busy: false, error: null });
     } catch (err) {
       set({ busy: false, error: err.message });
     }
   };
   return (
-    <form className="cs-form" onSubmit={handle}>
-      {children}
-      {state.error ? <div className="cs-form-error" role="alert">{state.error}</div> : null}
-      {note}
-      <C.Button className="cs-form-submit" loading={state.busy}>{submit}</C.Button>
-    </form>
+    <Errors.Provider value={errors}>
+      <form ref={ref} className="cs-form" onSubmit={handle} noValidate
+        onInput={(e) => { if (tried.current) check(); else if (errors[e.target.name]) check(e.target.name); }}
+        onBlur={(e) => { if (e.target.name && e.target.value) check(e.target.name); }}>
+        {children}
+        {state.error ? <div className="cs-form-error" role="alert">{state.error}</div> : null}
+        {note}
+        <C.Button className="cs-form-submit" loading={state.busy}>{submit}</C.Button>
+      </form>
+    </Errors.Provider>
   );
 }
 

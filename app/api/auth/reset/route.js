@@ -5,7 +5,10 @@ import { fail, guarded } from "@/lib/guard";
 export async function POST(req) {
   const { bad, body } = await guarded(req);
   if (bad) return bad;
-  const pe = passwordError(body.password);
+  const owner = consumeToken(body.token, "reset", true);
+  if (!owner) return fail("El enlace venció o ya se usó. Pide uno nuevo.", 410);
+  // Se valida antes de gastar el enlace: si la clave no sirve, la persona puede corregirla y reintentar.
+  const pe = passwordError(body.password, userById(owner).email);
   if (pe) return fail(pe);
   const id = consumeToken(body.token, "reset");
   if (!id) return fail("El enlace venció o ya se usó. Pide uno nuevo.", 410);

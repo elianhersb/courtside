@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Field, Form, post } from "@/components/AuthForm";
+import { emailError } from "@/lib/validate";
 
 export default function Forgot() {
   const [sent, setSent] = useState(null);
@@ -18,9 +19,10 @@ export default function Forgot() {
         ) : (
           <>
             <p className="cs-muted cs-auth-lead">Escribe el correo de tu cuenta y te enviaremos un enlace. También sirve si entras con Google y quieres agregar una clave.</p>
-            <Form submit="Enviar enlace" onSubmit={async (v) => { await post("/api/auth/forgot", v); setSent(v.email); }}
+            <Form submit="Enviar enlace" onSubmit={async (v) => { await post("/api/auth/forgot", v); setSent(v.email.trim()); }}
+              validate={(v) => ({ email: emailError(v.email) })}
               note={<Link className="cs-auth-link" href="/cuenta">Volver</Link>}>
-              <Field label="Correo" name="email" type="email" autoComplete="email" required />
+              <Field label="Correo" name="email" type="email" inputMode="email" autoComplete="email" placeholder="nombre@correo.com" required />
             </Form>
           </>
         )}
