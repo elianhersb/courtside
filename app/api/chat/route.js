@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { getScoreboard, getGame, searchPlayers, getPlayer } from "@/lib/espn";
+import { getScoreboard, getGame, searchPlayers, getPlayer, getLeaders, getInjuries } from "@/lib/espn";
 
 const tools = [
   {
@@ -26,6 +26,18 @@ const tools = [
     input_schema: { type: "object", properties: { player_id: { type: "string" } }, required: ["player_id"], additionalProperties: false },
     strict: true,
   },
+  {
+    name: "get_leaders",
+    description: "Líderes de la liga en la temporada (top 5, promedios por partido y porcentajes): puntos, rebotes, asistencias, robos, tapones, minutos y % de tiro; y los peores: más pérdidas, peor % de tiro, triples y libres, más faltas.",
+    input_schema: { type: "object", properties: {}, additionalProperties: false },
+    strict: true,
+  },
+  {
+    name: "get_injuries",
+    description: "Jugadores lesionados de toda la liga: estado (Fuera, Día a día…), lesión, fecha estimada de regreso y nota. Filtra por equipo con el código de 3 letras (LAL, GSW…) o deja vacío para todos.",
+    input_schema: { type: "object", properties: { team: { type: "string" } }, required: ["team"], additionalProperties: false },
+    strict: true,
+  },
 ];
 
 async function runTool(name, input, cards) {
@@ -44,6 +56,12 @@ async function runTool(name, input, cards) {
     const p = await getPlayer(input.player_id);
     cards.push({ type: "player", player: p });
     return p;
+  }
+  if (name === "get_leaders") return getLeaders();
+  if (name === "get_injuries") {
+    const all = await getInjuries();
+    const team = (input.team || "").toUpperCase();
+    return team ? all.filter((i) => i.team === team) : all.slice(0, 40);
   }
   throw new Error(`Herramienta desconocida: ${name}`);
 }

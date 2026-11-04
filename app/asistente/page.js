@@ -6,8 +6,17 @@ import { usePrefs } from "@/components/Shell";
 import { channelsFor, COUNTRIES } from "@/lib/channels";
 import { timeOf } from "@/lib/format";
 import RichText from "@/components/RichText";
+import ChatInput from "@/components/ChatInput";
 
-const SUGGESTIONS = ["¿Qué pasó ayer en la NBA?", "¿Quién juega hoy?", "¿Cómo le fue a Stephen Curry en su último partido?", "¿Dónde veo el próximo partido de los Lakers?"];
+// [ícono, título, pregunta]
+const SUGGESTIONS = [
+  ["today", "Resultados de ayer", "¿Qué pasó ayer en la NBA?"],
+  ["tv", "Dónde verlo", "¿Dónde veo el próximo partido de los Lakers?"],
+  ["players", "Líderes de la liga", "¿Quién lidera la NBA en rebotes y asistencias?"],
+  ["bell", "Lesionados", "¿Qué jugadores de los Warriors están lesionados?"],
+  ["star", "Un jugador", "¿Cómo le fue a Stephen Curry en su último partido?"],
+  ["clock", "Hoy", "¿Quién juega hoy y a qué hora?"],
+];
 
 export default function Assistant() {
   const router = useRouter();
@@ -15,7 +24,7 @@ export default function Assistant() {
   const [msgs, setMsgs] = useState([]); // { role, content, cards?, error? }
   const [busy, setBusy] = useState(false);
   const end = useRef(null);
-  useEffect(() => { end.current?.scrollIntoView({ block: "end", behavior: "smooth" }); }, [msgs, busy]);
+  useEffect(() => { if (msgs.length) end.current?.scrollIntoView({ block: "end", behavior: "smooth" }); }, [msgs, busy]);
   // Pregunta que llega desde el panel del escritorio (/asistente?q=...).
   useEffect(() => {
     const q = new URLSearchParams(location.search).get("q");
@@ -68,10 +77,19 @@ export default function Assistant() {
         </div>
       </div>
       {!msgs.length ? (
-        <div className="cs-gut cs-pop-in" style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "64px 24px 24px" }}>
-          <C.AppMark size={64} />
-          <div style={{ fontWeight: 650, fontSize: 17, marginTop: 14 }}>¿Qué quieres saber hoy?</div>
-          <div className="cs-muted" style={{ fontSize: 14, lineHeight: "20px", marginTop: 6, maxWidth: 280 }}>Respondo con datos en vivo de la NBA y te digo por dónde ver cada partido.</div>
+        <div className="cs-gut cs-welcome">
+          <div className="cs-welcome-mark"><C.AppMark size={64} /></div>
+          <h2>¿Qué quieres saber hoy?</h2>
+          <p className="cs-muted">Respondo con datos en vivo de la NBA y te digo por dónde ver cada partido.</p>
+          <div className="cs-suggest-grid">
+            {SUGGESTIONS.map(([icon, title, q], i) => (
+              <button key={q} className="cs-suggest-card cs-press" style={{ "--i": i }} onClick={() => send(q)}>
+                <span className="cs-suggest-ic"><C.Icon name={icon} /></span>
+                <b>{title}</b>
+                <span>{q}</span>
+              </button>
+            ))}
+          </div>
         </div>
       ) : null}
       <div className="cs-gut cs-stack cs-chat" style={{ gap: 12 }}>
@@ -88,10 +106,15 @@ export default function Assistant() {
         <div ref={end} />
       </div>
       <div className="cs-dock">
-        <div className="cs-chips">
-          {SUGGESTIONS.map((s) => <C.SuggestionChip key={s} onClick={() => send(s)}>{s}</C.SuggestionChip>)}
-        </div>
-        <C.Composer placeholder="Pregunta sobre partidos o jugadores" onSend={send} disabled={busy} />
+        {msgs.length && !busy ? (
+          <div className="cs-chips">
+            {SUGGESTIONS.map(([icon, title, q]) => (
+              <button key={q} className="cs-chip-q cs-press" onClick={() => send(q)}><C.Icon name={icon} />{title}</button>
+            ))}
+          </div>
+        ) : null}
+        <ChatInput onSend={send} busy={busy} />
+        <div className="cs-input-hint">CourtSide IA puede equivocarse. Revisa los datos importantes.</div>
       </div>
     </>
   );
