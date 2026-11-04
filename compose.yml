@@ -6,4 +6,7 @@ services:
     image: ghcr.io/elianhersb/courtside:latest
     env_file: .env.local
     ports: ["3000:3000"]
+    volumes: ["data:/app/.data"]
     restart: unless-stopped
+volumes:
+  data:

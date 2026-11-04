@@ -3,8 +3,9 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import C from "./cs";
 import { ChatProvider, ChatFab } from "./Chat";
+import { syncPush } from "@/lib/pushClient";
 
-const DEFAULTS = { favs: [], subs: ["leaguepass"], country: "VE", theme: "dark", notify: { start: true, end: false, close: true } };
+const DEFAULTS = { favs: [], subs: ["leaguepass"], country: "VE", theme: "dark", notify: { start: true, end: false, close: true }, push: false };
 const KEY = "courtside:prefs";
 const Prefs = createContext([DEFAULTS, () => {}]);
 export const usePrefs = () => useContext(Prefs);
@@ -28,6 +29,13 @@ export default function Shell({ children }) {
     try { localStorage.setItem(KEY, JSON.stringify(next)); } catch {}
     return next;
   });
+
+  // Con las alertas activas, el servidor necesita saber los equipos y avisos elegidos.
+  useEffect(() => {
+    if (!prefs.push) return;
+    const t = setTimeout(() => syncPush(prefs).catch(() => {}), 800);
+    return () => clearTimeout(t);
+  }, [prefs.push, prefs.favs, prefs.notify]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const apply = () => {

@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { getScoreboard, getGame, searchPlayers, getPlayer, getLeaders, getInjuries } from "@/lib/espn";
 import { getSeason } from "@/lib/season";
 import { getCup } from "@/lib/cup";
-import { limiter } from "@/lib/ratelimit";
+import { limiter, sameOrigin } from "@/lib/ratelimit";
 
 // Topes para que nadie gaste la key: por IP y en total por día (configurables por entorno).
 const perIp = limiter(Number(process.env.CHAT_PER_HOUR) || 20, 3600e3);
@@ -115,10 +115,7 @@ Las fechas de las herramientas son días de la liga (hora del Este de EE.UU.); "
 Sobre dónde ver un partido en Venezuela: siempre está NBA League Pass; si en EE.UU. lo pasa ESPN o ABC, en Latinoamérica suele ir por ESPN y Disney+. No afirmes canales locales sin datos.`;
 
 export async function POST(req) {
-  // Solo desde la propia app: el navegador manda Origin en los POST.
-  const origin = req.headers.get("origin");
-  const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
-  if (origin && origin.replace(/^https?:\/\//, "") !== host) return Response.json({ error: "Origen no permitido" }, { status: 403 });
+  if (!sameOrigin(req)) return Response.json({ error: "Origen no permitido" }, { status: 403 });
   // En orden: una IP que ya pasó su tope no consume el cupo diario de los demás.
   let limit = perIp(ipOf(req));
   if (limit.ok) limit = perDay("all");

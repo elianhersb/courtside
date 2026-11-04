@@ -1,9 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import C from "@/components/cs";
 import { usePrefs } from "@/components/Shell";
 import { COUNTRIES } from "@/lib/channels";
 import { tz } from "@/lib/format";
+import { pushSupported, enablePush, disablePush } from "@/lib/pushClient";
 
 const SUBS = ["disney", "espn", "leaguepass", "prime", "peacock", "meridiano", "televen", "nbc", "abc"];
 const NOTIFY = [["start", "Inicio de partido", "De tus equipos favoritos"], ["end", "Resultado final", "Marcador al terminar"], ["close", "Partidos cerrados", "Diferencia ≤ 5 en el último cuarto"]];
@@ -11,6 +12,20 @@ const NOTIFY = [["start", "Inicio de partido", "De tus equipos favoritos"], ["en
 export default function Profile() {
   const [prefs, setPrefs] = usePrefs();
   const [allTeams, setAllTeams] = useState(false);
+  const [push, setPush] = useState({ busy: false, error: null });
+  // Se mira en el cliente: en el servidor no hay navigator y el HTML no coincidiría.
+  const [supported, setSupported] = useState(true);
+  useEffect(() => setSupported(pushSupported()), []);
+  const togglePush = async (on) => {
+    setPush({ busy: true, error: null });
+    try {
+      await (on ? enablePush(prefs) : disablePush());
+      setPrefs({ push: on });
+      setPush({ busy: false, error: null });
+    } catch (e) {
+      setPush({ busy: false, error: e.message });
+    }
+  };
   const toggle = (key, k) => setPrefs({ [key]: prefs[key].includes(k) ? prefs[key].filter((x) => x !== k) : [...prefs[key], k] });
   const zone = Intl.DateTimeFormat().resolvedOptions().timeZone.split("/").pop().replace(/_/g, " ");
 
@@ -57,8 +72,17 @@ export default function Profile() {
         </section>
         <section>
           <h3 className="cs-h">Notificaciones</h3>
-          <p className="cs-muted" style={{ fontSize: 13, margin: "-6px 0 12px" }}>Próximamente: guardamos tu preferencia para cuando activemos las alertas.</p>
+          <p className="cs-muted" style={{ fontSize: 13, margin: "-6px 0 12px" }}>
+            {!supported ? "Este navegador no admite alertas. En iPhone, primero instala CourtSide en la pantalla de inicio."
+              : !prefs.favs.length ? "Elige al menos un equipo favorito: las alertas son de sus partidos."
+              : "Avisos de los partidos de tus equipos favoritos, aunque la app esté cerrada."}
+          </p>
           <div className="cs-list">
+            <div className="cs-li">
+              <C.Icon name="bell" style={{ width: 20, height: 20, color: "var(--ink-muted)" }} />
+              <div className="cs-li-main">Alertas en este dispositivo<div className="cs-li-sub">{push.busy ? "Un momento…" : push.error || (prefs.push ? "Activadas" : "Apagadas")}</div></div>
+              <C.Switch on={prefs.push} onChange={(v) => !push.busy && supported && togglePush(v)} />
+            </div>
             {NOTIFY.map(([k, title, sub]) => (
               <div className="cs-li" key={k}>
                 <div className="cs-li-main">{title}<div className="cs-li-sub">{sub}</div></div>

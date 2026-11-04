@@ -30,8 +30,10 @@ la versión. Para desplegar en un servidor con Docker:
 
 ```bash
 docker pull ghcr.io/elianhersb/courtside:latest
-docker run -d --env-file .env.local -p 3000:3000 ghcr.io/elianhersb/courtside:latest
+docker run -d --env-file .env.local -p 3000:3000 -v courtside-data:/app/.data ghcr.io/elianhersb/courtside:latest
 ```
+
+El volumen guarda las suscripciones a las alertas; sin él se pierden en cada deploy.
 
 ## Estructura
 
@@ -41,10 +43,11 @@ docker run -d --env-file .env.local -p 3000:3000 ghcr.io/elianhersb/courtside:la
 - `lib/season.js`: tabla de posiciones, play-in y llave de playoffs (series al mejor de 7). Todo sale de ESPN; antes de abril la llave es una proyección desde la tabla.
 - `lib/cup.js`: Copa NBA. Los grupos de cada temporada se cargan a mano en `SEASON` (ESPN no los publica); la tabla, el wild card y la llave se calculan con los resultados.
 - `app/api/*`: rutas que consulta la app; `app/api/chat` es el asistente (Claude con herramientas que llaman a `lib/espn.js`).
-- `public/sw.js`: service worker (red primero, caché como respaldo).
+- `lib/push.js`: alertas push. Cada minuto revisa los marcadores de ESPN y avisa el inicio, los partidos cerrados (≤ 5 puntos con menos de 5 min del último cuarto) y el final a quien sigue a esos equipos. Las suscripciones van en `.data/push.json`; arranca desde `instrumentation.js` si están `VAPID_PUBLIC_KEY` y `VAPID_PRIVATE_KEY`.
+- `public/sw.js`: service worker (red primero, caché como respaldo) y las notificaciones push.
+- El asistente tiene un tope de preguntas por IP y por día (`CHAT_PER_HOUR`, `CHAT_PER_DAY`).
 
 ## Pendiente
 
 - Canales locales (Meridiano, Televen): requieren el scraper de guías EPG.
-- Notificaciones push: los ajustes se guardan pero aún no se envían alertas.
 - Logos de canales/suscripciones: hoy se muestran como texto.
