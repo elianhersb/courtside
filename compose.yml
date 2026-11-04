@@ -1,0 +1,9 @@
+# Correr la imagen en local o en un servidor: docker compose up -d --build
+# Las variables del asistente (ANTHROPIC_* / CHAT_MODEL) se leen de .env.local, que no entra en la imagen.
+services:
+  web:
+    build: .
+    image: ghcr.io/elianhersb/courtside:latest
+    env_file: .env.local
+    ports: ["3000:3000"]
+    restart: unless-stopped

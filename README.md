@@ -13,6 +13,26 @@ npm test                     # pruebas de los normalizadores de datos
 
 Para instalarla en el teléfono hace falta HTTPS (p. ej. desplegar en Vercel). En Android aparece "Instalar"; en iPhone, Safari → Compartir → "Agregar a pantalla de inicio".
 
+## Docker
+
+```bash
+docker compose up -d --build     # http://localhost:3000, lee el asistente de .env.local
+```
+
+La imagen usa la salida `standalone` de Next.js, corre como usuario sin privilegios y trae healthcheck.
+Las keys nunca entran en la imagen: se pasan como variables de entorno al correrla.
+
+## CI/CD
+
+`.github/workflows/ci.yml` corre en cada push y pull request: instala, pasa las pruebas y compila. En cada push a
+`main` (y en tags `v*`) publica la imagen en `ghcr.io/elianhersb/courtside` con las etiquetas `latest`, `sha-…` y
+la versión. Para desplegar en un servidor con Docker:
+
+```bash
+docker pull ghcr.io/elianhersb/courtside:latest
+docker run -d --env-file .env.local -p 3000:3000 ghcr.io/elianhersb/courtside:latest
+```
+
 ## Estructura
 
 - `components/cs.js`: sistema de componentes exportado de Claude Design (no editar a mano salvo para conectar eventos). Estilos en `app/tokens.css` y `app/courtside.css`.

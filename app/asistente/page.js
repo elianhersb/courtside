@@ -5,6 +5,7 @@ import C from "@/components/cs";
 import { usePrefs } from "@/components/Shell";
 import { channelsFor, COUNTRIES } from "@/lib/channels";
 import { timeOf } from "@/lib/format";
+import RichText from "@/components/RichText";
 
 const SUGGESTIONS = ["¿Qué pasó ayer en la NBA?", "¿Quién juega hoy?", "¿Cómo le fue a Stephen Curry en su último partido?", "¿Dónde veo el próximo partido de los Lakers?"];
 
@@ -38,14 +39,22 @@ export default function Assistant() {
     }
   }
 
+  const ORDER = { live: 0, final: 1, scheduled: 2 };
+  const gameCard = (game) => {
+    const g = { ...game, time: game.status === "scheduled" ? timeOf(game.date) : undefined };
+    return <C.ChatGameCard key={g.id} game={g} onPress={() => router.push(`/partido/${g.id}`)} />;
+  };
   const card = (c, i) => {
     if (c.type === "player") {
       const p = c.player;
       return <C.ChatPlayerCard key={i} player={{ ...p, context: p.last5[0] ? `Último: ${p.last5[0].opp} · ${p.last5[0].pts} PTS` : "", stats: p.avgs.slice(0, 3).map(([l, v]) => [l, v, 1]) }} onPress={() => router.push(`/jugadores/${p.id}`)} />;
     }
-    const g = { ...c.game, time: c.game.status === "scheduled" ? timeOf(c.game.date) : undefined };
+    const games = [...(c.games || [])].sort((a, b) => ORDER[a.status] - ORDER[b.status]);
+    if (!games.length) return null;
+    if (games.length > 1) return <div key={i} className="cs-carousel">{games.map(gameCard)}</div>;
+    const g = games[0];
     return [
-      <C.ChatGameCard key={`g${i}`} game={g} onPress={() => router.push(`/partido/${g.id}`)} />,
+      gameCard(g),
       g.status === "scheduled" ? <C.ChatWatchCard key={`w${i}`} channels={channelsFor(g.broadcasts, prefs.country)} owned={prefs.subs} country={COUNTRIES[prefs.country]} /> : null,
     ];
   };
@@ -69,9 +78,11 @@ export default function Assistant() {
         {msgs.map((m, i) => m.role === "user"
           ? <C.ChatBubble key={i} from="user">{m.content}</C.ChatBubble>
           : (
-            <C.ChatBubble key={i} from="ai" attachments={m.cards?.length ? <div className="cs-stack" style={{ gap: 8 }}>{m.cards.map(card)}</div> : null}>
-              {m.error ? <span className="cs-error" style={{ padding: 0 }}>{m.content}</span> : <C.StreamText text={m.content} run={i === msgs.length - 1} />}
-            </C.ChatBubble>
+            <article key={i} className={`cs-answer${m.error ? " is-error" : ""}`}>
+              <div className="cs-answer-h"><C.AppMark size={22} />CourtSide IA</div>
+              {m.error ? <p className="cs-error" style={{ padding: 0, margin: 0 }}>{m.content}</p> : <RichText text={m.content} stream={i === msgs.length - 1} />}
+              {m.cards?.length ? <div className="cs-answer-cards">{m.cards.map(card)}</div> : null}
+            </article>
           ))}
         {busy ? <C.TypingIndicator querying label="Consultando datos de la NBA…" /> : null}
         <div ref={end} />

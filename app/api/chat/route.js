@@ -31,12 +31,12 @@ const tools = [
 async function runTool(name, input, cards) {
   if (name === "get_games") {
     const games = await getScoreboard(input.date);
-    if (games.length && games.length <= 2) cards.push(...games.map((game) => ({ type: "game", game })));
-    return games;
+    if (games.length) cards.push({ type: "games", games });
+    return { total: games.length, games };
   }
   if (name === "get_game_details") {
     const g = await getGame(input.game_id);
-    cards.push({ type: "game", game: { ...g, box: undefined, plays: undefined } });
+    cards.push({ type: "games", games: [{ ...g, box: undefined, plays: undefined }] });
     return { ...g, box: { away: g.box.away.slice(0, 8), home: g.box.home.slice(0, 8) }, plays: g.plays.slice(0, 15) };
   }
   if (name === "search_player") return searchPlayers(input.name);
@@ -49,7 +49,11 @@ async function runTool(name, input, cards) {
 }
 
 const system = (today) => `Eres el asistente de CourtSide, una app para seguir la NBA desde Venezuela. Hoy es ${today}.
-Responde en español, breve (2-4 frases), con datos concretos, en texto plano: sin Markdown, sin asteriscos ni listas. Usa siempre las herramientas para marcadores y estadísticas; nunca inventes números.
+Responde en español con datos concretos y este formato (la app lo muestra como una tarjeta):
+# Un titular corto y llamativo (máximo 8 palabras)
+Una frase de contexto.
+- De 2 a 4 viñetas breves, una idea por viñeta
+Usa **negritas** solo para nombres, marcadores y cifras clave. Nada de tablas, enlaces ni otros símbolos de Markdown. Los marcadores y tarjetas de los partidos se muestran solos debajo, no los listes todos. Usa siempre las herramientas para marcadores y estadísticas; nunca inventes números.
 Las fechas de las herramientas son días de la liga (hora del Este de EE.UU.); "ayer" es el día anterior a hoy.
 Sobre dónde ver un partido en Venezuela: siempre está NBA League Pass; si en EE.UU. lo pasa ESPN o ABC, en Latinoamérica suele ir por ESPN y Disney+. No afirmes canales locales sin datos.`;
 
@@ -69,7 +73,7 @@ export async function POST(req) {
     const client = new Anthropic();
     for (let turn = 0; turn < 8; turn++) {
       const res = await client.beta.messages.create({
-        model: process.env.CHAT_MODEL || "claude-opus-5-5",
+        model: process.env.CHAT_MODEL || "claude-haiku-5-5",
         max_tokens: 16000,
         output_config: { effort: "low" },
         // El respaldo ante rechazos es de la API de Anthropic; OpenRouter no lo acepta.

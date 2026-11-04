@@ -38,3 +38,25 @@ body { padding: 0; overscroll-behavior: none; }
   .cs-app { grid-template-columns: 200px minmax(0, 1fr); }
   .cs-aside { display: none; }
 }
+
+/* Respuesta del asistente: tarjeta con título, viñetas destacadas y carrusel de resultados. */
+.cs-answer { position: relative; isolation: isolate; overflow: hidden; width: 100%; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 14px 16px 16px; box-shadow: var(--shadow-card); animation: cs-pop-in var(--dur-base) var(--ease-out) both; }
+.cs-answer::before { content: ""; position: absolute; inset: 0; z-index: -1; background: radial-gradient(90% 70% at 0% 0%, var(--brand-soft), transparent 70%); }
+.cs-answer.is-error { border-color: var(--live); }
+.cs-answer-h { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-muted); }
+.cs-answer-h svg { border-radius: 7px; }
+.cs-rt h4 { margin: 0 0 10px; font-family: var(--font-display); font-size: 24px; line-height: 1.05; font-weight: 800; text-wrap: balance; }
+.cs-rt p { margin: 0 0 10px; font-size: 15px; line-height: 22px; }
+.cs-rt p:last-child { margin-bottom: 0; }
+.cs-rt ul { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 6px; }
+.cs-rt ul:last-child { margin-bottom: 0; }
+.cs-rt li { position: relative; padding: 9px 12px 9px 30px; border-radius: var(--radius-md); background: var(--surface-raised); font-size: 14px; line-height: 20px; animation: cs-enter var(--dur-base) var(--ease-out) both; animation-delay: calc(var(--i, 0) * 60ms); }
+.cs-rt li::before { content: ""; position: absolute; left: 13px; top: 16px; width: 7px; height: 7px; border-radius: 50%; background: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+.cs-rt strong { color: var(--brand-ink); font-weight: 750; font-variant-numeric: tabular-nums; }
+.cs-carousel { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin: 14px -16px 0; padding: 0 16px 2px; }
+.cs-carousel::-webkit-scrollbar { display: none; }
+.cs-carousel > * { flex: none; scroll-snap-align: start; }
+.cs-answer-cards { display: grid; gap: 10px; margin-top: 14px; }
+.cs-answer-cards .cs-rich { width: 100% !important; }
+.cs-carousel .cs-rich { width: 250px !important; }
+@media (prefers-reduced-motion: reduce) { .cs-rt li, .cs-answer { animation-name: cs-fade-only !important; } }

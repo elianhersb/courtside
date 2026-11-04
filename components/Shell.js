@@ -53,7 +53,11 @@ export default function Shell({ children }) {
   }, [prefs.theme]);
 
   useEffect(() => {
-    if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
+    // Solo en producción: en desarrollo los archivos de /_next/static no llevan hash y el caché serviría código viejo.
+    if ("serviceWorker" in navigator) {
+      if (process.env.NODE_ENV === "production") navigator.serviceWorker.register("/sw.js").catch(() => {});
+      else navigator.serviceWorker.getRegistrations().then((rs) => rs.forEach((r) => r.unregister()));
+    }
     const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
     let dismissed = false;
     try { dismissed = !!localStorage.getItem("courtside:install-dismissed"); } catch {}
